@@ -189,17 +189,12 @@ static const uint8 dosFont[128 * 8] = {
 static const int kGraphicsWidth	= 278;
 static const int kGraphicsHeight = 200;
 
-enum {
-	kColorBlack	= 0x80,
-	kColorWhite	= 0x00
-};
-
 static const int penColors[] = {
-	kColorWhite,
+	Renderer::kColorWhite,
 	1,
 	2,
-	kColorWhite,
-	kColorBlack,
+	Renderer::kColorWhite,
+	Renderer::kColorBlack,
 	5,
 	6,
 	7
@@ -494,6 +489,8 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 void Renderer::updateScreen() {
 	int xPad;
 
+	debug("Renderer::updateScreen");
+
 	xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
 
 	g_system->copyRectToScreen(_surf.getPixels(), kGraphicsWidth, xPad, 0, g_system->getWidth() - xPad, kGraphicsHeight);
@@ -563,8 +560,8 @@ void Renderer::drawChar(uint8 c, int x, int y, int color) {
 		y++;
 		x -= 8;
 	}
-
-	updateScreen();
+	
+	//updateScreen();
 }
 
 void Renderer::drawString(const char *string, int x, int y, int color) {
@@ -573,11 +570,15 @@ void Renderer::drawString(const char *string, int x, int y, int color) {
 	for (i = 0; i < strlen(string); i++)
 		drawChar(string[i], x + (i * 8), y, color);
 
-	updateScreen();
+	//updateScreen();
 }
 
-void Renderer::copyRect(Graphics::Surface &srcSurf, Common::Rect srcRect, int x, int y) {
-	_surf.copyRectToSurface(srcSurf, x, y, srcRect);
+void Renderer::copyRect(const void *pixels, int pitch, Common::Rect rect) {
+//void Renderer::copyRect(Graphics::Surface &srcSurf, Common::Rect srcRect, int x, int y) {	
+	debug("Copy rect to screen: x=%d, y=%d, w=%d, h=%d",
+	      rect.left, rect.top, rect.width(), rect.height());
+	g_system->copyRectToScreen(pixels, pitch, rect.left, rect.top, rect.width(), rect.height());
+	g_system->updateScreen();
 }
 
 } // End of namespace Comprehend

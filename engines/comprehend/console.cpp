@@ -14,7 +14,9 @@ char _inputBuffer[100];
 
 static const int kMaxCharsPerLine =  40;
 static const int kCharSize        =   8;
-static const int kBottomLine      = 190;
+static const int kBottomLine      = 200 - kCharSize;
+
+static const int kGraphicsModeTop = 200 - (5 * kCharSize);
 
 static const char kPromptChar     = '>';
 static const char kReplaceChar    = '@';
@@ -156,7 +158,7 @@ Console::Console(Renderer *renderer) : _renderer(renderer) {
 	// Flip between two surfaces for scrolling	
 	for (i = 0; i < 2; i++) {
 		_surfs[i].create(g_system->getWidth(), g_system->getHeight(), Graphics::PixelFormat::createFormatCLUT8()); 
-		_surfs[i].fillRect(Common::Rect(0, 0, g_system->getWidth(), g_system->getHeight()), kColorBlack);
+		_surfs[i].fillRect(Common::Rect(0, 0, g_system->getWidth(), g_system->getHeight()), Renderer::kColorBlack);
 	}
 	_currentSurf = 0;
 }
@@ -165,14 +167,19 @@ Console::~Console() {
 }
 
 void Console::updateScreen() {
-	_renderer->copyRect(_surfs[_currentSurf], Common::Rect(0, 180, _surfs[_currentSurf].w, _surfs[_currentSurf].h), 0, 180);
-	_renderer->updateScreen();
+	byte *pixels;
+
+	pixels  = (byte *)_surfs[_currentSurf].getPixels();
+	pixels += _surfs[_currentSurf].w * kGraphicsModeTop;
+
+	_renderer->copyRect(pixels, _surfs[_currentSurf].w, Common::Rect(0, kGraphicsModeTop, _surfs[_currentSurf].w, _surfs[_currentSurf].h));
 }
 
 void Console::scrollUp(bool pause) {
 	uint16 width, height;
 
 	// FIXME - handle pause
+	debug("scrollUp");
 
 	width  = _surfs[_currentSurf].w;
 	height = _surfs[_currentSurf].h;
@@ -181,7 +188,7 @@ void Console::scrollUp(bool pause) {
 	_surfs[_currentSurf ^ 1].copyRectToSurface(_surfs[_currentSurf], 0, 0, Common::Rect(0, kCharSize, width, height));
 
 	// Blank the bottom line of the other surf
-	_surfs[_currentSurf ^ 1].fillRect(Common::Rect(0, height - kCharSize, width, height), kColorBlack);
+	_surfs[_currentSurf ^ 1].fillRect(Common::Rect(0, height - kCharSize, width, height), Renderer::kColorBlack);
 	
 	// Flip surfaces and reset offset
 	_currentSurf ^= 1;
@@ -190,16 +197,20 @@ void Console::scrollUp(bool pause) {
 
 void Console::drawChar(uint8 c) {
 	const uint8 *charData;
-	int i, j;
+	int i, j, x, y;
 
 	if (c >= 128)
 		return;
 	
 	charData = &dosFont[c * 8];
 	for (i = 0; i < kCharSize; i++) {
-		for (j = kCharSize - 1; j >= 0; j--) {
-			if (*charData & (1 << j))
-				_surfs[_currentSurf].fillRect(Common::Rect(_xOffset, kBottomLine, _xOffset + i + 1, kBottomLine + i + 1), color);
+		for (j = 0; j < kCharSize; j++) {
+			if (*charData & (1 << (kCharSize - 1 - j))) {
+				x = _xOffset + j;
+				y = kBottomLine + i;
+
+				_surfs[_currentSurf].fillRect(Common::Rect(x, y, x + 1, y + 1), Renderer::kColorWhite);
+			}
 		}
 		
 		charData++;
@@ -232,6 +243,8 @@ void Console::writeWrappedText(const char *text) {
 	word = NULL;
 	lineLength = 0;
 	p = text;
+
+	scrollUp(false);
 
 	while (p && *p) {
 		switch (*p) {

@@ -10,6 +10,11 @@ namespace Comprehend {
 
 class Renderer {
 public:
+	enum {
+		kColorBlack	= 0x80,
+		kColorWhite	= 0x00
+	};
+
 	Renderer(ImageManager *imageManager);
 	~Renderer();
 
@@ -25,7 +30,7 @@ public:
 
 	void doImageOpcode(Common::File *file, uint8 opcode);
 
-	void copyRect(Graphics::Surface &srcSurf, Common::Rect srcRect, int x, int y);
+	void copyRect(const void *pixels, int pitch, Common::Rect rect);
 
 	ImageManager *_imageManager;
 	Graphics::Surface _surf;

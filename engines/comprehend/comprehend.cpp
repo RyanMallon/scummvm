@@ -67,6 +67,7 @@ Common::Error ComprehendEngine::run() {
 	_imageManager.init(roomImageFiles, 3, NULL, 0);
 
 	_renderer = new Renderer(&_imageManager);
+	_console = new Console(_renderer);
 
 	// TESTING
 	debug("100, 100 = %x\n", _renderer->getPixel(100, 100));
@@ -76,6 +77,7 @@ Common::Error ComprehendEngine::run() {
 	debug("Comprehend::init");
  
 	int index = 0;
+	_renderer->drawRoomImage(index++);
 	while (1) {
 		if (shouldQuit())
 			break;
@@ -86,7 +88,10 @@ Common::Error ComprehendEngine::run() {
 			switch (event.type) {
 
 			case Common::EVENT_KEYDOWN:
-				_renderer->drawRoomImage(index++);
+				char buf[128];
+				snprintf(buf, sizeof(buf), "Hello, world [%d]", index++);
+				_console->writeWrappedText(buf);
+				_console->updateScreen();
 				break;
 
 			default:
@@ -94,7 +99,8 @@ Common::Error ComprehendEngine::run() {
 			}
 		}
 
-		g_system->delayMillis(100);
+		//g_system->delayMillis(1000);
+
 	}
  
 	return Common::kNoError;

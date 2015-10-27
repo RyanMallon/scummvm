@@ -5,8 +5,6 @@
 
 namespace Comprehend {
 
-//class Renderer;
-
 class Console {
 public:	
 	Console(Renderer *renderer);
@@ -24,7 +22,6 @@ public:
 	Graphics::Surface _surfs[2];
 	int _currentSurf;
 	int _xOffset;
-
 };
 
 } // End of namespace Comprehend

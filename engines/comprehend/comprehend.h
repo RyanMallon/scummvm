@@ -8,6 +8,7 @@
 #include "comprehend/image_manager.h"
 #include "comprehend/game_data.h"
 #include "comprehend/renderer.h"
+#include "comprehend/console.h"
 
 namespace Comprehend {
 
@@ -41,6 +42,7 @@ private:
 	GameData _gameData;
 	ImageManager _imageManager;
 	Renderer *_renderer;
+	Console *_console;
 };
 
 } // End of namespace Comprehend
