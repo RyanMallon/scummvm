@@ -489,8 +489,6 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 void Renderer::updateScreen() {
 	int xPad;
 
-	debug("Renderer::updateScreen");
-
 	xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
 
 	g_system->copyRectToScreen(_surf.getPixels(), kGraphicsWidth, xPad, 0, g_system->getWidth() - xPad, kGraphicsHeight);
@@ -574,9 +572,6 @@ void Renderer::drawString(const char *string, int x, int y, int color) {
 }
 
 void Renderer::copyRect(const void *pixels, int pitch, Common::Rect rect) {
-//void Renderer::copyRect(Graphics::Surface &srcSurf, Common::Rect srcRect, int x, int y) {	
-	debug("Copy rect to screen: x=%d, y=%d, w=%d, h=%d",
-	      rect.left, rect.top, rect.width(), rect.height());
 	g_system->copyRectToScreen(pixels, pitch, rect.left, rect.top, rect.width(), rect.height());
 	g_system->updateScreen();
 }

@@ -78,6 +78,10 @@ Common::Error ComprehendEngine::run() {
  
 	int index = 0;
 	_renderer->drawRoomImage(index++);
+	
+	_console->mainLoop();
+
+#if 0
 	while (1) {
 		if (shouldQuit())
 			break;
@@ -102,6 +106,7 @@ Common::Error ComprehendEngine::run() {
 		//g_system->delayMillis(1000);
 
 	}
+#endif
  
 	return Common::kNoError;
 }

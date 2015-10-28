@@ -1,6 +1,8 @@
 #include "common/rect.h"
 #include "common/debug.h"
 #include "common/system.h"
+#include "common/events.h"
+#include "common/keyboard.h"
 
 #include "comprehend/comprehend.h"
 #include "comprehend/renderer.h"
@@ -8,18 +10,16 @@
 
 namespace Comprehend {
 
-int _xOffset;
+static const int kMaxCharsPerLine        =  40;
+static const int kCharSize               =   8;
+static const int kBottomLine             = 200 - kCharSize;
 
-char _inputBuffer[100];
+static const int kTextModeTop            = 0;
+static const int kGraphicsModeTop        = 200 - (5 * kCharSize);
 
-static const int kMaxCharsPerLine =  40;
-static const int kCharSize        =   8;
-static const int kBottomLine      = 200 - kCharSize;
-
-static const int kGraphicsModeTop = 200 - (5 * kCharSize);
-
-static const char kPromptChar     = '>';
-static const char kReplaceChar    = '@';
+static const char kPromptChar            = '>';
+static const char kReplaceChar           = '@';
+static const uint32 kPromptUpdateTimeout = 250;
 
 static const uint8 dosFont[128 * 8] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -155,6 +155,11 @@ static const uint8 dosFont[128 * 8] = {
 Console::Console(Renderer *renderer) : _renderer(renderer) {
 	int i;
 
+	_promptBlinkState = 0;
+	_promptUpdateTime = 0;
+
+	_inputCount = 0;
+
 	// Flip between two surfaces for scrolling	
 	for (i = 0; i < 2; i++) {
 		_surfs[i].create(g_system->getWidth(), g_system->getHeight(), Graphics::PixelFormat::createFormatCLUT8()); 
@@ -179,7 +184,6 @@ void Console::scrollUp(bool pause) {
 	uint16 width, height;
 
 	// FIXME - handle pause
-	debug("scrollUp");
 
 	width  = _surfs[_currentSurf].w;
 	height = _surfs[_currentSurf].h;
@@ -193,6 +197,10 @@ void Console::scrollUp(bool pause) {
 	// Flip surfaces and reset offset
 	_currentSurf ^= 1;
 	_xOffset = 0;
+}
+
+void Console::clearChar() {
+	_surfs[_currentSurf].fillRect(Common::Rect(_xOffset, kBottomLine, _xOffset + kCharSize, kBottomLine + kCharSize), Renderer::kColorBlack);
 }
 
 void Console::drawChar(uint8 c) {
@@ -215,25 +223,26 @@ void Console::drawChar(uint8 c) {
 		
 		charData++;
 	}
-
-	_xOffset += kCharSize;
 }
 
-void Console::drawSpace(void) {
+void Console::nextChar(void) {
 	_xOffset += kCharSize;
 }
 
 void Console::drawString(const char *str, size_t len) {
 	size_t i;
 
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		drawChar(str[i]);
+		nextChar();
+	}
 }
 
 void Console::drawPrompt() {
 	// FIXME
 	scrollUp(false);
 	drawChar('>');
+	nextChar();
 }
 
 void Console::writeWrappedText(const char *text) {
@@ -297,7 +306,7 @@ void Console::writeWrappedText(const char *text) {
 				lineLength = 0;
 				scrollUp(true);
 			} else {
-				drawSpace();
+				nextChar();
 				lineLength++;
 			}
 			p++;
@@ -305,6 +314,64 @@ void Console::writeWrappedText(const char *text) {
 			// Skip any double spaces 
 			while (*p == ' ')
 				p++;
+		}
+	}
+}
+
+void Console::handleKey(int key) {
+	char c;
+
+	if ((key >= Common::KEYCODE_a && key <= Common::KEYCODE_z) || key == Common::KEYCODE_SPACE) {
+
+		// Make sure there is space in the input buffer
+		if (_inputCount >= sizeof(_inputBuffer))
+			return;
+
+		// Always print uppercase letters
+		if (key >= Common::KEYCODE_a && key <= Common::KEYCODE_z)
+			c = 'A' + (key - Common::KEYCODE_a);
+		else
+			c = key;
+		
+		_inputBuffer[_inputCount++] = c;
+		drawChar(c);
+		nextChar();
+
+	} else if (key == Common::KEYCODE_RETURN) {
+		// FIXME - handle sentence
+		_inputCount = 0;
+		drawPrompt();
+	}
+}
+
+void Console::mainLoop() {
+	Common::Event event;
+
+	drawPrompt();
+	while (1) {
+		if (g_system->getMillis() > _promptUpdateTime + kPromptUpdateTimeout) {
+			if (_promptBlinkState)
+				clearChar();
+			else
+				drawChar('.');
+
+			_promptBlinkState ^= 1;
+			_promptUpdateTime = g_system->getMillis();
+			updateScreen();
+		}
+
+		while (g_system->getEventManager()->pollEvent(event)) {
+			switch (event.type) {
+			case Common::EVENT_KEYDOWN:
+				// Ensure blinking prompt is not visible
+				clearChar();
+
+				handleKey(event.kbd.keycode);
+				break;
+				
+			default:
+				break;
+			}
 		}
 	}
 }
