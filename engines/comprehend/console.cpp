@@ -227,6 +227,8 @@ void Console::drawChar(uint8 c) {
 
 void Console::nextChar(void) {
 	_xOffset += kCharSize;
+	if (_xOffset >= kCharSize * kMaxCharsPerLine)
+		scrollUp(false);
 }
 
 void Console::drawString(const char *str, size_t len) {
@@ -318,14 +320,14 @@ void Console::writeWrappedText(const char *text) {
 	}
 }
 
-void Console::handleKey(int key) {
+bool Console::handleKey(int key) {
 	char c;
 
 	if ((key >= Common::KEYCODE_a && key <= Common::KEYCODE_z) || key == Common::KEYCODE_SPACE) {
 
 		// Make sure there is space in the input buffer
 		if (_inputCount >= sizeof(_inputBuffer))
-			return;
+			return false;
 
 		// Always print uppercase letters
 		if (key >= Common::KEYCODE_a && key <= Common::KEYCODE_z)
@@ -338,17 +340,22 @@ void Console::handleKey(int key) {
 		nextChar();
 
 	} else if (key == Common::KEYCODE_RETURN) {
-		// FIXME - handle sentence
+		// FIXME - RETURN with no input switch graphics/text mode
+		_inputBuffer[_inputCount] = '\0';
 		_inputCount = 0;
-		drawPrompt();
+		return true;
 	}
+
+	return false;
 }
 
-void Console::mainLoop() {
+char *Console::getLine() {
 	Common::Event event;
+	bool done;
 
 	drawPrompt();
 	while (1) {
+		// Blinking cursor
 		if (g_system->getMillis() > _promptUpdateTime + kPromptUpdateTimeout) {
 			if (_promptBlinkState)
 				clearChar();
@@ -366,7 +373,9 @@ void Console::mainLoop() {
 				// Ensure blinking prompt is not visible
 				clearChar();
 
-				handleKey(event.kbd.keycode);
+				done = handleKey(event.kbd.keycode);
+				if (done)
+					return _inputBuffer;
 				break;
 				
 			default:
@@ -374,6 +383,7 @@ void Console::mainLoop() {
 			}
 		}
 	}
+
 }
 
 } // End of namespace Comprehend

@@ -22,8 +22,8 @@ public:
 	void drawPrompt();
 	void writeWrappedText(const char *text);	
 	void updateScreen();
-	void mainLoop();
-	void handleKey(int key);
+	bool handleKey(int key);
+	char *getLine();
 
 	ComprehendEngine *_engine;
 	Renderer *_renderer;
