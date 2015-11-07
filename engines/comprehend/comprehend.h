@@ -27,6 +27,11 @@ enum {
 	kDebugGraphics = (1 << 0)
 };
 
+struct sentence {
+	struct wordIndex *word[4];
+	size_t           numWords;
+};
+
 class ComprehendEngine : public Engine {
 public:
 	ComprehendEngine(OSystem *syst, const ComprehendGameDescription *gd);
@@ -37,6 +42,7 @@ public:
 	void initGame(const ComprehendGameDescription *gd);
 
 	virtual Common::Error run();
+	void handleSentence(struct sentence *sentence);
 
 	const ComprehendGameDescription *_gameDescription;
 	Common::RandomSource *_rnd;

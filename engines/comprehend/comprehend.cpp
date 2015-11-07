@@ -53,6 +53,38 @@ bool ComprehendEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsRTL);
 }
 
+void ComprehendEngine::handleSentence(struct sentence *sentence) {
+	struct action *action;
+	size_t i, j;
+
+	// Find a matching action
+	for (i = 0; i < _gameData->_actions.size(); i++) {
+		action = &_gameData->_actions[i];
+
+		//
+		// If the action type is verb only then it may optionally
+		// have a noun. All other action types require an exact
+		// number of words.
+		//
+		if (action->type == kActionV && sentence->numWords > action->numWords + 1)
+			continue;
+		if (action->type != kActionV && sentence->numWords != action->numWords)
+			continue;
+
+		for (j = 0; j < action->numWords; j++) {
+			if (sentence->word[j] &&
+			    sentence->word[j]->index == action->word[j].index &&
+			    (sentence->word[j]->type & action->word[j].type)) {
+				// Found a matching action
+				debug("Sentence matches function %.4x", action->function);
+				return;
+			}
+		}
+	}
+
+	_console->writeWrappedText(_gameData->_strings[kStringDontUnderstand]);
+}
+
 Common::Error ComprehendEngine::run() {
 	// Initialize graphics using following:
 	initGraphics(320, 200, false);
@@ -83,14 +115,19 @@ Common::Error ComprehendEngine::run() {
 	_renderer->drawRoomImage(index++);
 
 	while (1) {
+		Common::Array<struct sentence> sentences;
 		char *line;
+		size_t i;
 
 		if (shouldQuit())
 			break;
 
 		line = _console->getLine();
 		debug("Line: '%s'", line);
-		_parser->readString(line);
+
+		sentences = _parser->readString(line);
+		for (i = 0; i < sentences.size(); i++)
+			handleSentence(&sentences[i]);
 	}
 
 	return Common::kNoError;

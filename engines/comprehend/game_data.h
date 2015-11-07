@@ -44,6 +44,17 @@ enum WordType {
 	kWordNoun       = (kWordNounFemale | kWordNounMale | kWordNounNeuter | kWordNounPlural)
 };
 
+enum DefaultStrings {
+	kStringCantGo         = 0,
+	kStringDontUnderstand = 1,
+	kStringYouSee         = 2,
+	kStringInventory      = 3,
+	kStringInventoryEmpty = 4,
+	kStringBeforeContinue = 5,
+	kStringSaveGame       = 6,
+	kStringRestoreGame    = 7
+};
+
 struct room {
 	uint8  direction[Comprehend::kNumDirections];
 	uint8  flags;

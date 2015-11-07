@@ -13,24 +13,27 @@ Parser::Parser(GameData *gameData) : _gameData(gameData) {
 Parser::~Parser() {
 }
 
-void Parser::readString(const char *string) {
+Common::Array<struct sentence> Parser::readString(const char *string) {
 	Common::StringTokenizer tokenizer(Common::String(string), " ,");
 	Common::String token;
 	Common::Array<struct wordIndex *> words;
+	Common::Array<struct sentence> sentences;
+	struct sentence sentence;
+	size_t i;
 
-	// Convert string to dictionary words
+	// Convert the string to an array of dictionary words
 	while (!tokenizer.empty()) {
 		token = tokenizer.nextToken();
 		words.push_back(_gameData->lookupDictionaryWord(token.c_str()));
 	}
 
-	size_t i;
-	for (i = 0; i < words.size(); i++) {
-		if (words[i])
-			debug("%.2x:%.2x", words[i]->index, words[i]->type);
-		else
-			debug("unknown");
-	}
+	// FIXME - currently just returning first four words
+	sentence.numWords = MIN(4, (int)words.size());
+	for (i = 0; i < sentence.numWords; i++)
+		sentence.word[i] = words[i];
+	sentences.push_back(sentence);
+       
+	return sentences;
 }
 
 } // namespace Comprehend

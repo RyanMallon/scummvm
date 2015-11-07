@@ -1,6 +1,9 @@
 #ifndef COMPREHEND_PARSER_H
 #define COMPREHEND_PARSER_H
 
+#include "common/array.h"
+
+#include "comprehend/comprehend.h"
 #include "comprehend/game_data.h"
 
 namespace Comprehend {
@@ -12,7 +15,7 @@ public:
 	Parser(GameData *gameData);
 	~Parser();
 
-	void readString(const char *string);
+	Common::Array<struct sentence> readString(const char *string);
 
 	GameData *_gameData;
 };
