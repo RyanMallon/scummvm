@@ -15,6 +15,7 @@
 #include "comprehend/comprehend.h"
 #include "comprehend/image_manager.h"
 #include "comprehend/game_data.h"
+#include "comprehend/parser.h"
 
 namespace Comprehend {
 
@@ -62,12 +63,14 @@ Common::Error ComprehendEngine::run() {
 		"RC.MS1",
 	};
 
-	_gameData.loadGameData();
+	_gameData = new GameData();
+	_gameData->loadGameData();
 
 	_imageManager.init(roomImageFiles, 3, NULL, 0);
 
 	_renderer = new Renderer(&_imageManager);
 	_console = new Console(_renderer);
+	_parser = new Parser(_gameData);
 
 	// TESTING
 	debug("100, 100 = %x\n", _renderer->getPixel(100, 100));
@@ -87,6 +90,7 @@ Common::Error ComprehendEngine::run() {
 
 		line = _console->getLine();
 		debug("Line: '%s'", line);
+		_parser->readString(line);
 	}
 
 	return Common::kNoError;

@@ -7,7 +7,8 @@ MODULE_OBJS :=		\
 	image_manager.o	\
 	image_file.o	\
 	renderer.o	\
-	console.o
+	console.o	\
+	parser.o
 
 ifeq ($(ENABLE_COMPREHEND), DYNAMIC_PLUGIN)
 PLUGIN := 1

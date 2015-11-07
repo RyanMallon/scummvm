@@ -7,13 +7,99 @@
 
 namespace Comprehend {
 
-#define NR_DIRECTIONS	8
+enum Direction {
+	kDirectionNorth,
+	kDirectionSouth,
+	kDirectionEast,
+	kDirectionWest,
+	kDirectionUp,
+	kDirectionDown,
+	kDirectionIn,
+	kDirectionOut,
+
+	kNumDirections
+};
+
+enum ActionType {
+	kActionVVNN,
+	kActionVVN,
+	kActionVNJN,
+	kActionVJN,
+	kActionVDN,
+	kActionVNN,
+	kActionVN,
+	kActionV,
+	
+	kNumActionTypes
+};
+
+enum WordType {
+	kWordNone       = 0x00,
+	kWordVerb       = 0x01,
+	kWordJoin       = 0x02,
+	kWordNounFemale = 0x10,
+	kWordNounMale   = 0x20,
+	kWordNounNeuter = 0x40,
+	kWordNounPlural = 0x80,	
+	kWordNoun       = (kWordNounFemale | kWordNounMale | kWordNounNeuter | kWordNounPlural)
+};
+
+struct room {
+	uint8  direction[Comprehend::kNumDirections];
+	uint8  flags;
+	uint8  graphic;
+	uint16 description;
+};
+
+struct object {
+	uint16 description;
+	uint16 longDescription; // Only used by version 2
+	uint8  room;
+	uint8  flags;
+	uint8  word;
+	uint8  graphic;
+};
+
+struct wordIndex {
+	uint8  index;
+	uint8  type;
+};
+
+struct word {
+	char             word[7];
+	struct wordIndex index;
+};
+
+struct action {
+	ActionType       type;
+	size_t           numWords;
+	struct wordIndex word[4];
+	uint16           function;
+};
+
+struct instruction {
+	uint8  opcode;
+	uint8  operand[3];
+
+	size_t numOperands(void) { 
+		return opcode & 0x3;
+	}
+	
+	bool isCommand(void) {
+		return opcode & 0x80;
+	}
+};
+
+struct function {
+	Common::Array<struct instruction> instructions;
+};
 
 class GameData {
 public:
 	struct Header {
 		uint16	magic;
-
+		
+#if 0
 		uint16	actionsVVNN;
 		uint16	actionsVVN;
 		uint16	actionsVNJN;
@@ -22,26 +108,39 @@ public:
 		uint16	actionsVNN;
 		uint16	actionsVN;
 		uint16	actionsV;
-		
-		uint16	roomDescTable;
-		uint16	roomDirectionTable[NR_DIRECTIONS];
-		uint16	roomFlagsTable;
-		uint16	roomGraphicsTable;
-		
-		uint16	itemLocations;
-		uint16	itemFlags;
-		uint16	itemWords;
-		uint16	itemStrings;
-		uint16	itemGraphics;
-		
+#endif
+		uint16  actions[kNumActionTypes];
+
+		uint16	functions;
 		uint16	dictionary;
 		uint16	wordMap;
+
+		uint16	roomDescriptions;
+		uint16	roomDirections[kNumDirections];
+		uint16	roomFlags;
+		uint16	roomGraphics;
+		
+		uint16	objectRooms;
+		uint16	objectFlags;
+		uint16	objectWords;
+		uint16	objectDescriptions;
+		uint16	objectGraphics;
 		
 		uint16	strings;
-		uint16	stringsEnd;
-		
-		uint16	functions;	
 	} _header;
+
+	Common::Array<struct action> _actions;
+	Common::Array<char *> _strings;
+	Common::Array<struct function> _functions;
+
+	size_t _numRooms;
+	struct room *_rooms;
+
+	size_t _numObjects;
+	struct object *_objects;
+
+	size_t _numWords;
+	struct word *_words;
 
 	Common::File _mainFile;
 
@@ -49,8 +148,27 @@ public:
 	~GameData();
 	void loadGameData();
 
+	bool readActionTableHeader(uint8 *word, uint8 *count);
+	void loadActionTable(ActionType type, size_t numWords, WordType word1, WordType word2, WordType word3, WordType word4, size_t headerWordIndex);
+	void loadActionTableV(void);
+	void loadActions(void);
+
+	uint64 getEncodedStringChunk(uint8 *encoded);
+	char decodeStringCharacter(uint8 c, bool capital, bool punctuation);
+	char *decodeString(Common::File &file);
+	void loadStrings(Common::File &file, int32 startOffset, int32 endOffset);
+
+	void loadRooms();
+	void loadObjects();
+	void loadDictionaryWords();
+	void loadFunctions();
+
+	bool dictionaryWordMatch(struct word *word, const char *string);
+	struct wordIndex *lookupDictionaryWord(const char *string);
+
+
 private:
-	uint16 readHeaderAddress();
+	void readHeaderAddress(uint16 *addr);
 };
 
 } // End of namespace Comprehend

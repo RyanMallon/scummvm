@@ -9,8 +9,11 @@
 #include "comprehend/game_data.h"
 #include "comprehend/renderer.h"
 #include "comprehend/console.h"
+#include "comprehend/parser.h"
 
 namespace Comprehend {
+
+	class GameData;
 
 struct ComprehendGameDescription;
 
@@ -39,10 +42,11 @@ public:
 	Common::RandomSource *_rnd;
 
 private:
-	GameData _gameData;
+	GameData *_gameData;
 	ImageManager _imageManager;
 	Renderer *_renderer;
 	Console *_console;
+	Parser *_parser;
 };
 
 } // End of namespace Comprehend
