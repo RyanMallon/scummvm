@@ -160,9 +160,9 @@ Console::Console(Renderer *renderer) : _renderer(renderer) {
 
 	_inputCount = 0;
 
-	// Flip between two surfaces for scrolling	
+	// Flip between two surfaces for scrolling
 	for (i = 0; i < 2; i++) {
-		_surfs[i].create(g_system->getWidth(), g_system->getHeight(), Graphics::PixelFormat::createFormatCLUT8()); 
+		_surfs[i].create(g_system->getWidth(), g_system->getHeight(), Graphics::PixelFormat::createFormatCLUT8());
 		_surfs[i].fillRect(Common::Rect(0, 0, g_system->getWidth(), g_system->getHeight()), Renderer::kColorBlack);
 	}
 	_currentSurf = 0;
@@ -188,12 +188,12 @@ void Console::scrollUp(bool pause) {
 	width  = _surfs[_currentSurf].w;
 	height = _surfs[_currentSurf].h;
 
-	// Copy all but the top line to the other surf	
+	// Copy all but the top line to the other surf
 	_surfs[_currentSurf ^ 1].copyRectToSurface(_surfs[_currentSurf], 0, 0, Common::Rect(0, kCharSize, width, height));
 
 	// Blank the bottom line of the other surf
 	_surfs[_currentSurf ^ 1].fillRect(Common::Rect(0, height - kCharSize, width, height), Renderer::kColorBlack);
-	
+
 	// Flip surfaces and reset offset
 	_currentSurf ^= 1;
 	_xOffset = 0;
@@ -209,7 +209,7 @@ void Console::drawChar(uint8 c) {
 
 	if (c >= 128)
 		return;
-	
+
 	charData = &dosFont[c * 8];
 	for (i = 0; i < kCharSize; i++) {
 		for (j = 0; j < kCharSize; j++) {
@@ -220,7 +220,7 @@ void Console::drawChar(uint8 c) {
 				_surfs[_currentSurf].fillRect(Common::Rect(x, y, x + 1, y + 1), Renderer::kColorWhite);
 			}
 		}
-		
+
 		charData++;
 	}
 }
@@ -248,6 +248,11 @@ void Console::drawPrompt() {
 }
 
 void Console::writeWrappedText(const char *text) {
+	// FIXME - need to handle replacement words
+	scrollUp(false);
+	drawString(text, strlen(text));
+
+#if 0
 	const char *p, *replace, *word;
 	size_t wordLen, lineLength;
 
@@ -255,7 +260,6 @@ void Console::writeWrappedText(const char *text) {
 	lineLength = 0;
 	p = text;
 
-	scrollUp(false);
 
 	while (p && *p) {
 		switch (*p) {
@@ -293,12 +297,16 @@ void Console::writeWrappedText(const char *text) {
 			continue;
 
 		// Print this word
+#if 0
 		if (lineLength + wordLen > kMaxCharsPerLine) {
 			// Too long - scroll up
 			lineLength = 0;
 			scrollUp(true);
+			debug("too long - scroll");
 		}
+#endif
 
+		debug("print '%.*s'", wordLen, word);
 		drawString(word, wordLen);
 		lineLength += wordLen;
 
@@ -313,11 +321,12 @@ void Console::writeWrappedText(const char *text) {
 			}
 			p++;
 
-			// Skip any double spaces 
+			// Skip any double spaces
 			while (*p == ' ')
 				p++;
 		}
 	}
+#endif
 }
 
 bool Console::handleKey(int key) {
@@ -334,7 +343,7 @@ bool Console::handleKey(int key) {
 			c = 'A' + (key - Common::KEYCODE_a);
 		else
 			c = key;
-		
+
 		_inputBuffer[_inputCount++] = c;
 		drawChar(c);
 		nextChar();
@@ -377,7 +386,7 @@ char *Console::getLine() {
 				if (done)
 					return _inputBuffer;
 				break;
-				
+
 			default:
 				break;
 			}

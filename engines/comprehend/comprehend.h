@@ -9,6 +9,7 @@
 #include "comprehend/game_data.h"
 #include "comprehend/renderer.h"
 #include "comprehend/console.h"
+#include "comprehend/opcodes.h"
 #include "comprehend/parser.h"
 
 namespace Comprehend {
@@ -44,11 +45,15 @@ public:
 	virtual Common::Error run();
 	void handleSentence(struct sentence *sentence);
 
+	void evalFunction(struct function *func, struct wordIndex *verb, struct wordIndex *noun);
+	void evalInstruction(struct function_state *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
+
 	const ComprehendGameDescription *_gameDescription;
 	Common::RandomSource *_rnd;
 
 private:
 	GameData *_gameData;
+	OpcodeMap *_opcodeMap;
 	ImageManager _imageManager;
 	Renderer *_renderer;
 	Console *_console;

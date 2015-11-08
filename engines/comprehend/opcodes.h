@@ -85,6 +85,7 @@ public:
 };
 
 class OpcodeMapV1 : public OpcodeMap {
+public:
 	OpcodeMapV1() : OpcodeMap() {
 		_map[0x01] = OPCODE_HAVE_OBJECT;
 		_map[0x04] = OPCODE_OR;

@@ -15,6 +15,7 @@
 #include "comprehend/comprehend.h"
 #include "comprehend/image_manager.h"
 #include "comprehend/game_data.h"
+#include "comprehend/opcodes.h"
 #include "comprehend/parser.h"
 
 namespace Comprehend {
@@ -53,8 +54,74 @@ bool ComprehendEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsRTL);
 }
 
+struct function_state {
+	bool   testResult;
+	bool   elseResult;
+	size_t orCount;
+	bool   isAnd;
+	bool   inCommand;
+	bool   executed;
+};
+
+void ComprehendEngine::evalInstruction(struct function_state *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) {
+	uint16 index;
+
+	if (state->orCount)
+		state->orCount--;
+
+	if (instr->isCommand()) {
+		state->inCommand = true;
+		state->orCount = 0;
+		if (!state->testResult)
+			return;
+
+		state->elseResult = false;
+		state->executed = true;
+
+	} else {
+		if (state->inCommand) {
+			// Finished sequence of commands - clear the result
+			state->inCommand = false;
+			state->testResult = false;
+			state->isAnd = false;
+		}
+	}
+
+	switch (_opcodeMap->_map[instr->opcode]) {
+	case OPCODE_PRINT:
+		index = (instr->operand[1] << 8 | instr->operand[0]) & 0x7fff;
+		debug("String index %.4x", index);
+		if (index < _gameData->_strings.size())
+			_console->writeWrappedText(_gameData->_strings[index]);
+		else
+			_console->writeWrappedText("BAD STRING");
+		break;
+	}
+}
+
+void ComprehendEngine::evalFunction(struct function *func, struct wordIndex *verb, struct wordIndex *noun) {
+	struct function_state state;
+	size_t i;
+
+	memset(&state, 0, sizeof(state));
+	state.testResult = true;
+	state.elseResult = true;
+	state.executed = false;
+
+	for (i = 0; i < func->instructions.size(); i++) {
+		if (state.executed && !func->instructions[i].isCommand()) {
+			// At least one command has been executed and the
+			// current instruction is a test. Exit the function.
+			break;
+		}
+
+		evalInstruction(&state, &func->instructions[i], verb, noun);
+	}
+}
+
 void ComprehendEngine::handleSentence(struct sentence *sentence) {
 	struct action *action;
+	struct wordIndex *verb = NULL, *noun = NULL;
 	size_t i, j;
 
 	// Find a matching action
@@ -72,13 +139,18 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 			continue;
 
 		for (j = 0; j < action->numWords; j++) {
-			if (sentence->word[j] &&
-			    sentence->word[j]->index == action->word[j].index &&
-			    (sentence->word[j]->type & action->word[j].type)) {
-				// Found a matching action
-				debug("Sentence matches function %.4x", action->function);
-				return;
-			}
+			if (!(sentence->word[j] &&
+			      sentence->word[j]->index == action->word[j].index &&
+			      (sentence->word[j]->type & action->word[j].type)))
+				break;
+		}
+		if (j == action->numWords) {
+			debug("Sentence matches function %.4x", action->function);
+			verb = sentence->word[0];
+			if (sentence->numWords > 1)
+				noun = sentence->word[1];
+			evalFunction(&_gameData->_functions[action->function], verb, noun);
+			return;
 		}
 	}
 
@@ -97,6 +169,7 @@ Common::Error ComprehendEngine::run() {
 
 	_gameData = new GameData();
 	_gameData->loadGameData();
+	_opcodeMap = new OpcodeMapV1();
 
 	_imageManager.init(roomImageFiles, 3, NULL, 0);
 
