@@ -229,7 +229,7 @@ char *GameData::decodeString(Common::File &file) {
 
 	if (encodedLen == 0)
 		return NULL;
-	
+
 	string = (char *)malloc(encodedLen * 2);
 
 	for (i = 0; i < encodedLen; i += 5) {
@@ -261,7 +261,7 @@ done:
 
 void GameData::loadStrings(Common::File &file, int32 startOffset, int32 endOffset) {
 	char *string;
-		
+
 	file.seek(startOffset, SEEK_SET);
 	while (1) {
 		string = decodeString(file);
@@ -277,6 +277,15 @@ void GameData::loadStrings(Common::File &file, int32 startOffset, int32 endOffse
 	for (i = 0; i < _strings.size(); i++)
 		debug("[%.4x] %s", i, _strings[i]);
 #endif
+}
+
+const char *GameData::getString(uint16 index) {
+	index &= 0x7fff;
+
+	if (index >= _strings.size())
+		return "BAD_STRING";
+
+	return _strings[index];
 }
 
 void GameData::loadFunctions(void) {
@@ -304,7 +313,7 @@ void GameData::loadFunctions(void) {
 
 			func.instructions.push_back(instr);
 		}
-		
+
 		if (!done)
 			_functions.push_back(func);
 	}
@@ -397,7 +406,7 @@ void GameData::loadDictionaryWords(void) {
 		for (j = 0; j < 6; j++) {
 			_words[i].word[j] ^= 0x8a;
 			_words[i].word[j] = toupper(_words[i].word[j]);
-		}			
+		}
 		_words[i].word[6] = '\0';
 
 		_words[i].index.index = _mainFile.readByte();

@@ -54,16 +54,40 @@ bool ComprehendEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsRTL);
 }
 
-struct function_state {
+struct functionState {
 	bool   testResult;
 	bool   elseResult;
 	size_t orCount;
 	bool   isAnd;
 	bool   inCommand;
 	bool   executed;
+
+	void setTestResult(bool value) {
+		if (orCount == 0) {
+			// and
+			if (isAnd) {
+				if (!value)
+					testResult = false;
+			} else {
+				testResult = value;
+				isAnd = false;
+			}
+		} else {
+			// or
+			if (value)
+				testResult = value;
+		}
+	}
 };
 
-void ComprehendEngine::evalInstruction(struct function_state *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) {
+void ComprehendEngine::moveToRoom(uint8 room) {
+	if (room != _currentRoom)
+		_updateFlags = (kUpdateGraphics | kUpdateRoomDesc | kUpdateItemList);
+	_currentRoom = room;
+}
+
+void ComprehendEngine::evalInstruction(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) {
+	struct room *room = &_gameData->_rooms[_currentRoom];
 	uint16 index;
 
 	if (state->orCount)
@@ -89,18 +113,55 @@ void ComprehendEngine::evalInstruction(struct function_state *state, struct inst
 
 	switch (_opcodeMap->_map[instr->opcode]) {
 	case OPCODE_PRINT:
-		index = (instr->operand[1] << 8 | instr->operand[0]) & 0x7fff;
-		debug("String index %.4x", index);
-		if (index < _gameData->_strings.size())
-			_console->writeWrappedText(_gameData->_strings[index]);
+		index = (instr->operand[1] << 8 | instr->operand[0]);
+		_console->writeWrappedText(_gameData->getString(index));
+		break;
+
+	case OPCODE_MOVE:
+		if (room->direction[verb->index - 1])
+			moveToRoom(room->direction[verb->index - 1]);
 		else
-			_console->writeWrappedText("BAD STRING");
+			_console->writeWrappedText(_gameData->_strings[kStringCantGo]);
+		break;
+
+	case OPCODE_MOVE_TO_ROOM:
+		if (instr->operand[0] == 0xff) {
+			// This was used for copy protection in the orignal
+			// games. Ignore it.
+			break;
+		}
+
+		moveToRoom(instr->operand[0]);
+		break;
+
+	case OPCODE_IN_ROOM:
+		state->setTestResult(_currentRoom == instr->operand[0]);
+		break;
+
+	case OPCODE_OR:
+		if (state->orCount) {
+			state->orCount += 2;
+		} else {
+			state->testResult = false;
+			state->orCount += 3;
+		}
+		break;
+
+	case OPCODE_ELSE:
+		state->testResult = state->elseResult;
+		break;
+
+	default:
+		debugN("UNHANDLED: [%.2x] ", instr->opcode);
+		for (int i = 0; i < instr->numOperands(); i++)
+			debugN("%.2x ", instr->operand[i]);
+		debugN("\n");
 		break;
 	}
 }
 
 void ComprehendEngine::evalFunction(struct function *func, struct wordIndex *verb, struct wordIndex *noun) {
-	struct function_state state;
+	struct functionState state;
 	size_t i;
 
 	memset(&state, 0, sizeof(state));
@@ -157,6 +218,22 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 	_console->writeWrappedText(_gameData->_strings[kStringDontUnderstand]);
 }
 
+void ComprehendEngine::update(void) {
+	struct room *room = &_gameData->_rooms[_currentRoom];
+
+	if (_updateFlags & kUpdateGraphics)
+		_renderer->drawRoomImage(room->graphic - 1);
+
+	if (_updateFlags & kUpdateRoomDesc)
+		_console->writeWrappedText(_gameData->getString(room->description));
+
+	if (_updateFlags & kUpdateItemList) {
+		// FIXME
+	}
+
+	_updateFlags = kUpdateNone;
+}
+
 Common::Error ComprehendEngine::run() {
 	// Initialize graphics using following:
 	initGraphics(320, 200, false);
@@ -177,6 +254,9 @@ Common::Error ComprehendEngine::run() {
 	_console = new Console(_renderer);
 	_parser = new Parser(_gameData);
 
+	// FIXME - read from data file
+	_currentRoom = 1;
+
 	// TESTING
 	debug("100, 100 = %x\n", _renderer->getPixel(100, 100));
 	debug("100, 190 = %x\n", _renderer->getPixel(100, 190));
@@ -184,9 +264,7 @@ Common::Error ComprehendEngine::run() {
 	// Additional setup.
 	debug("Comprehend::init");
 
-	int index = 0;
-	_renderer->drawRoomImage(index++);
-
+	_updateFlags = kUpdateAll;
 	while (1) {
 		Common::Array<struct sentence> sentences;
 		char *line;
@@ -194,6 +272,8 @@ Common::Error ComprehendEngine::run() {
 
 		if (shouldQuit())
 			break;
+
+		update();
 
 		line = _console->getLine();
 		debug("Line: '%s'", line);

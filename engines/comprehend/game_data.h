@@ -177,6 +177,7 @@ public:
 	bool dictionaryWordMatch(struct word *word, const char *string);
 	struct wordIndex *lookupDictionaryWord(const char *string);
 
+	const char *getString(uint16 index);
 
 private:
 	void readHeaderAddress(uint16 *addr);
