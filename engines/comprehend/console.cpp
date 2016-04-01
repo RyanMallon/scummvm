@@ -171,6 +171,10 @@ Console::Console(Renderer *renderer) : _renderer(renderer) {
 Console::~Console() {
 }
 
+void Console::updateRect(Common::Rect rect) {
+	_renderer->copyRect(_surfs[_currentSurf].getBasePtr(rect.left, rect.top), _surfs[_currentSurf].w, rect);
+}
+
 void Console::updateScreen() {
 	byte *pixels;
 
@@ -197,10 +201,16 @@ void Console::scrollUp(bool pause) {
 	// Flip surfaces and reset offset
 	_currentSurf ^= 1;
 	_xOffset = 0;
+
+	// FIXME - lazy
+	updateScreen();
 }
 
 void Console::clearChar() {
-	_surfs[_currentSurf].fillRect(Common::Rect(_xOffset, kBottomLine, _xOffset + kCharSize, kBottomLine + kCharSize), Renderer::kColorBlack);
+	Common::Rect rect(_xOffset, kBottomLine, _xOffset + kCharSize, kBottomLine + kCharSize);
+
+	_surfs[_currentSurf].fillRect(rect, Renderer::kColorBlack);
+	updateRect(rect);
 }
 
 void Console::drawChar(uint8 c) {
@@ -223,6 +233,9 @@ void Console::drawChar(uint8 c) {
 
 		charData++;
 	}
+
+	// Copy it to the screen
+	updateRect(Common::Rect(_xOffset, kBottomLine, _xOffset + kCharSize, kBottomLine + kCharSize));
 }
 
 void Console::nextChar(void) {
@@ -373,7 +386,7 @@ char *Console::getLine() {
 
 			_promptBlinkState ^= 1;
 			_promptUpdateTime = g_system->getMillis();
-			updateScreen();
+			//updateScreen();
 		}
 
 		while (g_system->getEventManager()->pollEvent(event)) {

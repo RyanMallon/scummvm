@@ -186,8 +186,9 @@ static const uint8 dosFont[128 * 8] = {
 #define IMAGE_OP_PAINT			0xe0
 #define IMAGE_OP_PAINT_FAR		0xe1
 
-static const int kGraphicsWidth	= 278;
-static const int kGraphicsHeight = 200;
+static const int kGraphicsWidth		= 278;
+// FIXME - shared constant with console
+static const int kGraphicsHeight	= (200 - 40);
 
 static const int penColors[] = {
 	Renderer::kColorWhite,
@@ -340,7 +341,7 @@ Renderer::Renderer(ImageManager *imageManager) : _imageManager(imageManager) {
 
 		0x00, 0x00, 0x00, // 80
 	};
-	
+
 	g_system->getPaletteManager()->setPalette(_palette, 0, 0x80);
 
 	_surf.create(kGraphicsWidth, kGraphicsHeight, Graphics::PixelFormat::createFormatCLUT8());
@@ -357,10 +358,33 @@ int Renderer::getPixel(int x, int y) {
 	return pixelData[(kGraphicsWidth * y) + x];
 }
 
+void Renderer::updateBox(unsigned x1, unsigned y1, unsigned x2, unsigned y2) {
+	unsigned width, height;
+	int xPad;
+
+	xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
+
+	if (x1 > x2)
+		SWAP(x1, x2);
+	if (y1 > y2)
+		SWAP(y1, y2);
+
+	width = MAX(x2 - x1, 1U);
+	height = MAX(y2 - y1, 1U);
+
+	debugC(1, Comprehend::kDebugGraphics, "UPDATEBOX(%d, %d, %d, %d)", x1, y1, width, height);
+	g_system->copyRectToScreen(_surf.getPixels(), kGraphicsWidth, x1 + xPad, y1, width, height);
+	g_system->updateScreen();
+	g_system->delayMillis(10);
+}
+
 void Renderer::floodFill(int x, int y, int oldColor) {
 	int x1, x2, i;
 
 	if (getPixel(x, y) != oldColor || _fillColor == oldColor)
+		return;
+
+	if (x < 0 || x >= kGraphicsWidth || y < 0 || y >= kGraphicsHeight)
 		return;
 
 	// Find the left and right ends of the current scanline
@@ -409,11 +433,12 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 
 		if (opcode & 1)
 			a += 0xff;
-		
+
 		debugC(1, Comprehend::kDebugGraphics, "line(%d, %d)-(%d, %d), color=%.2x", _penX, _penY, a, b, _penColor);
 		_surf.drawLine(_penX, _penY, a, b, _penColor);
 		_penX = a;
 		_penY = b;
+
 		break;
 
 	case IMAGE_OP_DRAW_BOX:
@@ -477,7 +502,7 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 
 	case IMAGE_OP_FILL_COLOR:
 		_fillColor = file->readByte();
-		debugC(1, Comprehend::kDebugGraphics, "set_fill_color(%.2x)", _fillColor);  
+		debugC(1, Comprehend::kDebugGraphics, "set_fill_color(%.2x)", _fillColor);
 		break;
 
 	default:
@@ -504,16 +529,16 @@ void Renderer::drawImage(Common::File *file, off_t offset) {
 	_fillColor = kColorWhite;
 
 	file->seek(offset, SEEK_SET);
-	while (1) {		
+	while (1) {
 		opcode = file->readByte();
 		if (opcode == IMAGE_OP_END)
 			break;
 
 		doImageOpcode(file, opcode);
-
-		updateScreen();
 		//g_system->delayMillis(10);
 	}
+
+	updateScreen();
 }
 
 void Renderer::drawRoomImage(uint16 index) {
@@ -531,7 +556,7 @@ void Renderer::drawRoomImage(uint16 index) {
 	// Clear to white
 	_surf.fillRect(Common::Rect(0, 0, kGraphicsWidth, kGraphicsHeight), kColorWhite);
 	updateScreen();
-	
+
 	drawImage(&imageFile->_file, imageFile->_imageOffsets[imageIndex]);
 
 	// Blank the area for the text parser
@@ -545,7 +570,7 @@ void Renderer::drawChar(uint8 c, int x, int y, int color) {
 
 	if (c >= 128)
 		return;
-	
+
 	charData = &dosFont[c * 8];
 	for (i = 0; i < 8; i++) {
 		for (j = 7; j >= 0; j--) {
@@ -553,13 +578,11 @@ void Renderer::drawChar(uint8 c, int x, int y, int color) {
 				_surf.fillRect(Common::Rect(x, y, x + 1, y + 1), color);
 			x++;
 		}
-		
+
 		charData++;
 		y++;
 		x -= 8;
 	}
-	
-	//updateScreen();
 }
 
 void Renderer::drawString(const char *string, int x, int y, int color) {

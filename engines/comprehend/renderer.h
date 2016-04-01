@@ -28,6 +28,9 @@ public:
 	void drawChar(uint8 c, int x, int y, int color);
 	void drawString(const char *string, int x, int y, int color);
 
+	// FIXME - static?
+	void updateBox(unsigned x1, unsigned y1, unsigned x2, unsigned y2);
+
 	void doImageOpcode(Common::File *file, uint8 opcode);
 
 	void copyRect(const void *pixels, int pitch, Common::Rect rect);

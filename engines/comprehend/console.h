@@ -25,6 +25,8 @@ public:
 	bool handleKey(int key);
 	char *getLine();
 
+	void updateRect(Common::Rect rect);
+
 	ComprehendEngine *_engine;
 	Renderer *_renderer;
 	Graphics::Surface _surfs[2];
