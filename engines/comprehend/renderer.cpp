@@ -345,6 +345,9 @@ Renderer::Renderer(ImageManager *imageManager) : _imageManager(imageManager) {
 	g_system->getPaletteManager()->setPalette(_palette, 0, 0x80);
 
 	_surf.create(kGraphicsWidth, kGraphicsHeight, Graphics::PixelFormat::createFormatCLUT8());
+
+	// Clear the screen to black
+	g_system->fillScreen(~0);
 }
 
 Renderer::~Renderer() {
@@ -359,23 +362,34 @@ int Renderer::getPixel(int x, int y) {
 }
 
 void Renderer::updateBox(unsigned x1, unsigned y1, unsigned x2, unsigned y2) {
+	int xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
 	unsigned width, height;
-	int xPad;
 
-	xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
+	// Clamp to within screen bounds
+	x1 = MIN(x1, (unsigned)kGraphicsWidth);
+	y1 = MIN(y1, (unsigned)kGraphicsHeight);
+	x2 = MIN(x2, (unsigned)kGraphicsWidth);
+	y2 = MIN(y2, (unsigned)kGraphicsHeight);
 
 	if (x1 > x2)
 		SWAP(x1, x2);
+
 	if (y1 > y2)
 		SWAP(y1, y2);
 
+	// Ensure the update box is at least one pixel
 	width = MAX(x2 - x1, 1U);
 	height = MAX(y2 - y1, 1U);
 
-	debugC(1, Comprehend::kDebugGraphics, "UPDATEBOX(%d, %d, %d, %d)", x1, y1, width, height);
-	g_system->copyRectToScreen(_surf.getPixels(), kGraphicsWidth, x1 + xPad, y1, width, height);
+	g_system->copyRectToScreen(_surf.getBasePtr(x1, y1), kGraphicsWidth, xPad + x1, y1, width, height);
 	g_system->updateScreen();
-	g_system->delayMillis(10);
+}
+
+void Renderer::updateScreen() {
+	int xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
+
+	g_system->copyRectToScreen(_surf.getBasePtr(0, 0), kGraphicsWidth, xPad, 0, kGraphicsWidth, kGraphicsHeight);
+	g_system->updateScreen();
 }
 
 void Renderer::floodFill(int x, int y, int oldColor) {
@@ -397,6 +411,7 @@ void Renderer::floodFill(int x, int y, int oldColor) {
 
 	// Draw the current scanline
 	_surf.drawLine(x1, y, x2, y, _fillColor);
+	updateBox(x1, y, x2, y);
 
 	// Recursively draw the above scanlines
 	for (i = x1; i < x2; i++)
@@ -436,6 +451,7 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 
 		debugC(1, Comprehend::kDebugGraphics, "line(%d, %d)-(%d, %d), color=%.2x", _penX, _penY, a, b, _penColor);
 		_surf.drawLine(_penX, _penY, a, b, _penColor);
+		updateBox(_penX, _penY, a, b);
 		_penX = a;
 		_penY = b;
 
@@ -511,15 +527,6 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 	}
 }
 
-void Renderer::updateScreen() {
-	int xPad;
-
-	xPad = (g_system->getWidth() - kGraphicsWidth) / 2;
-
-	g_system->copyRectToScreen(_surf.getPixels(), kGraphicsWidth, xPad, 0, g_system->getWidth() - xPad, kGraphicsHeight);
-	g_system->updateScreen();
-}
-
 void Renderer::drawImage(Common::File *file, off_t offset) {
 	uint8 opcode;
 
@@ -535,7 +542,7 @@ void Renderer::drawImage(Common::File *file, off_t offset) {
 			break;
 
 		doImageOpcode(file, opcode);
-		//g_system->delayMillis(10);
+		g_system->delayMillis(1);
 	}
 
 	updateScreen();
