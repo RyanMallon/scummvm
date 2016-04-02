@@ -366,6 +366,13 @@ bool Console::handleKey(int key) {
 		_inputBuffer[_inputCount] = '\0';
 		_inputCount = 0;
 		return true;
+
+	} else if (key == Common::KEYCODE_BACKSPACE) {
+		if (_xOffset != 0 && _inputCount != 0) {
+			_inputCount--;
+			_xOffset -= kCharSize;
+			clearChar();
+		}
 	}
 
 	return false;
