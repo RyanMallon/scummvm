@@ -373,6 +373,7 @@ void GameData::loadRooms(void) {
 void GameData::loadObjects(void) {
 	size_t i;
 
+	// FIXME - use vectors?
 	_numObjects = _header.objectWords - _header.objectFlags;
 	_objects = new struct object[_numObjects];
 

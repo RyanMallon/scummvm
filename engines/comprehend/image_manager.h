@@ -11,15 +11,12 @@ namespace Comprehend {
 class ImageManager {
 public:
 	Common::Array<ImageFile *> _roomImageFiles;
-
-	//ImageFile *_roomImageFiles;
-	size_t _numRoomFiles;
+	Common::Array<ImageFile *> _objectImageFiles;
 
 	ImageManager();
 	~ImageManager();
 	
 	void init(const char *roomFiles[], size_t numRoomFiles, const char *objectFiles[], size_t numObjectFiles);
-	void drawRoomImage(uint16 index);
 };
 
 } // End of namespace Comprehend

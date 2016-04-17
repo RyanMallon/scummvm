@@ -19,12 +19,17 @@ public:
 	~Renderer();
 
 	int getPixel(int x, int y);
+	void putPixel(int x, int y, int color);
+
+	void drawShape(int x, int y, int shape, int color);
 	void floodFill(int x, int y, int oldColor);
 
 	void updateScreen();
-	void drawRoomImage(uint16 index);
+
 	void drawImage(Common::File *file, off_t offset);
-	
+	void drawRoomImage(uint16 index);
+	void drawObjectImage(uint16 index);
+
 	void drawChar(uint8 c, int x, int y, int color);
 	void drawString(const char *string, int x, int y, int color);
 
@@ -42,6 +47,7 @@ public:
 
 	uint8 _penColor;
 	uint8 _fillColor;
+	int _currentShape;
 };
 
 } // End of namespace Comprehend

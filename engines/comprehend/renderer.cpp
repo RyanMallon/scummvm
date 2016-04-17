@@ -355,10 +355,15 @@ Renderer::~Renderer() {
 }
 
 int Renderer::getPixel(int x, int y) {
-	byte *pixelData;
+	byte *pixelData = (byte *)_surf.getPixels();
 
-	pixelData = (byte *)_surf.getPixels();
 	return pixelData[(kGraphicsWidth * y) + x];
+}
+
+void Renderer::putPixel(int x, int y, int color) {
+	byte *pixelData = (byte *)_surf.getPixels();
+
+	pixelData[(kGraphicsWidth * y) + x] = color;
 }
 
 void Renderer::updateBox(unsigned x1, unsigned y1, unsigned x2, unsigned y2) {
@@ -424,6 +429,89 @@ void Renderer::floodFill(int x, int y, int oldColor) {
 			floodFill(i, y + 1, oldColor);
 }
 
+void Renderer::drawShape(int x, int y, int shape, int color) {
+	int i, j;
+
+	switch (shape) {
+	case IMAGE_OP_SHAPE_PIXEL:
+		x += 7;
+		y += 7;
+		putPixel(x, y, color);
+		updateBox(x, y, x + 1, y + 1);
+		break;
+
+	case IMAGE_OP_SHAPE_BOX:
+		x += 6;
+		y += 7;
+		_surf.fillRect(Common::Rect(x, y, x + 2, y + 2), color);
+		updateBox(x, y, x + 2, y + 2);
+		break;
+
+	case IMAGE_OP_SHAPE_CIRCLE_TINY:
+		x += 5;
+		y += 5;
+		_surf.fillRect(Common::Rect(x + 1, y, x + 3, y + 4), color);
+		_surf.fillRect(Common::Rect(x, y + 1, x + 4, y + 3), color);
+		updateBox(x, y, x + 4, y + 4);
+		break;
+
+	case IMAGE_OP_SHAPE_CIRCLE_SMALL:
+		x += 4;
+		y += 4;
+		_surf.fillRect(Common::Rect(x + 1, y, x + 5, y + 6), color);
+		_surf.fillRect(Common::Rect(x, y + 1, x + 6, y + 5), color);
+		updateBox(x, y, x + 6, y + 6);
+		break;
+
+	case IMAGE_OP_SHAPE_CIRCLE_MED:
+		x += 1;
+		y += 1;
+		_surf.fillRect(Common::Rect(x + 1, y + 1, x + 9, y + 9), color);
+		_surf.fillRect(Common::Rect(x + 3, y, x + 7, y + 10), color);
+		_surf.fillRect(Common::Rect(x, y + 3, x + 10, y + 7), color);
+		updateBox(x, y, x + 10, y + 10);
+		break;
+
+	case IMAGE_OP_SHAPE_CIRCLE_LARGE:
+		_surf.fillRect(Common::Rect(x + 2, y + 1, x + 12, y + 13), color);
+		_surf.fillRect(Common::Rect(x + 1, y + 2, x + 13, y + 12), color);
+		_surf.fillRect(Common::Rect(x + 5, y, x + 9, y + 14), color);
+		_surf.fillRect(Common::Rect(x, y + 5, x + 14, y + 9), color);
+		updateBox(x, y, x + 14, y + 14);
+		break;
+
+	case IMAGE_OP_SHAPE_SPRAY:
+		{
+			char spray[13][13] = {
+				{0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0},
+				{0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+				{0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1},
+				{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+				{1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0},
+				{0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0},
+				{1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0},
+				{0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0},
+				{1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0},
+				{0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0},
+				{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+				{0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0},
+			};
+
+			for (i = 0; i < 13; i++)
+				for (j = 0; j < 13; j++)
+					if (spray[i][j])
+						putPixel(x + i, y + j, color);
+			updateBox(x, y, x + 13, y + 13);
+		}
+		break;
+
+	default:
+		debug("Unknown shape: %d", shape);
+		break;
+	}
+}
+
 void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 	unsigned int a, b;
 
@@ -472,14 +560,14 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 	case IMAGE_OP_SHAPE_CIRCLE_LARGE:
 	case IMAGE_OP_SHAPE_A:
 	case IMAGE_OP_SHAPE_SPRAY:
-		// FIXME
+		_currentShape = opcode;
 		break;
 
 	case IMAGE_OP_DRAW_SHAPE:
 	case IMAGE_OP_DRAW_SHAPE_FAR:
-		// FIXME
 		a = file->readByte();
 		b = file->readByte();
+		drawShape(a, b, _currentShape, _fillColor);
 		break;
 
 	case IMAGE_OP_SET_TEXT_POS:
@@ -546,6 +634,20 @@ void Renderer::drawImage(Common::File *file, off_t offset) {
 	}
 
 	updateScreen();
+}
+
+void Renderer::drawObjectImage(uint16 index) {
+	unsigned int fileIndex, imageIndex;
+	ImageFile *imageFile;
+
+	fileIndex  = index / ImageFile::kImagesPerFile;
+	imageIndex = index % ImageFile::kImagesPerFile;
+
+	if (fileIndex >= _imageManager->_roomImageFiles.size())
+		error("Invalid object image index %d\n", index);
+
+	imageFile = _imageManager->_objectImageFiles[fileIndex];
+	drawImage(&imageFile->_file, imageFile->_imageOffsets[imageIndex]);
 }
 
 void Renderer::drawRoomImage(uint16 index) {

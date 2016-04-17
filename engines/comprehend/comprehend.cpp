@@ -126,8 +126,7 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	case OPCODE_MOVE_TO_ROOM:
 		if (instr->operand[0] == 0xff) {
-			// This was used for copy protection in the orignal
-			// games. Ignore it.
+			// This was used for copy protection hooks in the original games. Ignore it.
 			break;
 		}
 
@@ -136,6 +135,10 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	case OPCODE_IN_ROOM:
 		state->setTestResult(_currentRoom == instr->operand[0]);
+		break;
+
+	case OPCODE_NOT_IN_ROOM:
+		state->setTestResult(_currentRoom != instr->operand[0]);
 		break;
 
 	case OPCODE_OR:
@@ -220,9 +223,21 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 
 void ComprehendEngine::update(void) {
 	struct room *room = &_gameData->_rooms[_currentRoom];
+	struct object *obj;
+	int i;
 
-	if (_updateFlags & kUpdateGraphics)
+	if (_updateFlags & kUpdateGraphics) {
+		// Draw the current room image
 		_renderer->drawRoomImage(room->graphic - 1);
+
+		// Draw items
+		for (i = 0; i < _gameData->_numObjects; i++) {
+			obj = &_gameData->_objects[i];
+
+			if (obj->room == _currentRoom)
+				_renderer->drawObjectImage(obj->graphic - 1);
+		}
+	}
 
 	if (_updateFlags & kUpdateRoomDesc)
 		_console->writeWrappedText(_gameData->getString(room->description));
@@ -238,17 +253,23 @@ Common::Error ComprehendEngine::run() {
 	// Initialize graphics using following:
 	initGraphics(320, 200, false);
 
+	// FIXME - hardcoded for testing
 	const char *roomImageFiles[] = {
 		"RA.MS1",
 		"RB.MS1",
 		"RC.MS1",
+	};
+	const char *objectImageFiles[] = {
+		"OA.MS1",
+		"OB.MS1",
+		"OC.MS1",
 	};
 
 	_gameData = new GameData();
 	_gameData->loadGameData();
 	_opcodeMap = new OpcodeMapV1();
 
-	_imageManager.init(roomImageFiles, 3, NULL, 0);
+	_imageManager.init(roomImageFiles, 3, objectImageFiles, 3);
 
 	_renderer = new Renderer(&_imageManager);
 	_console = new Console(_renderer);
