@@ -7,6 +7,15 @@
 
 namespace Comprehend {
 
+enum SpecialRooms {
+	kRoomInventory	= 0x00,
+	kRoomNowhere	= 0xff
+};
+
+enum ObjectFlags {
+	kObjectTakeable	= (1 << 3)
+};
+
 enum Direction {
 	kDirectionNorth,
 	kDirectionSouth,
@@ -29,7 +38,7 @@ enum ActionType {
 	kActionVNN,
 	kActionVN,
 	kActionV,
-	
+
 	kNumActionTypes
 };
 
@@ -40,7 +49,7 @@ enum WordType {
 	kWordNounFemale = 0x10,
 	kWordNounMale   = 0x20,
 	kWordNounNeuter = 0x40,
-	kWordNounPlural = 0x80,	
+	kWordNounPlural = 0x80,
 	kWordNoun       = (kWordNounFemale | kWordNounMale | kWordNounNeuter | kWordNounPlural)
 };
 
@@ -92,10 +101,10 @@ struct instruction {
 	uint8  opcode;
 	uint8  operand[3];
 
-	size_t numOperands(void) { 
+	size_t numOperands(void) {
 		return opcode & 0x3;
 	}
-	
+
 	bool isCommand(void) {
 		return opcode & 0x80;
 	}
@@ -109,7 +118,7 @@ class GameData {
 public:
 	struct Header {
 		uint16	magic;
-		
+
 #if 0
 		uint16	actionsVVNN;
 		uint16	actionsVVN;
@@ -130,13 +139,13 @@ public:
 		uint16	roomDirections[kNumDirections];
 		uint16	roomFlags;
 		uint16	roomGraphics;
-		
+
 		uint16	objectRooms;
 		uint16	objectFlags;
 		uint16	objectWords;
 		uint16	objectDescriptions;
 		uint16	objectGraphics;
-		
+
 		uint16	strings;
 	} _header;
 

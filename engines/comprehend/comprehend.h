@@ -55,6 +55,9 @@ public:
 
 	void update(void);
 	void moveToRoom(uint8 room);
+	void moveObject(struct object *obj, uint8 newRoom);
+
+	struct object *nounToObject(struct wordIndex *noun);
 
 	void evalFunction(struct function *func, struct wordIndex *verb, struct wordIndex *noun);
 	void evalInstruction(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);

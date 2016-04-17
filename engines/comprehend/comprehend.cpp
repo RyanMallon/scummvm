@@ -86,8 +86,61 @@ void ComprehendEngine::moveToRoom(uint8 room) {
 	_currentRoom = room;
 }
 
+void ComprehendEngine::moveObject(struct object *obj, uint8 newRoom) {
+	//unsigned obj_weight = item->flags & ITEMF_WEIGHT_MASK;
+
+	if (obj->room == newRoom)
+		return;
+
+	if (obj->room == kRoomInventory) {
+		// Removed from player's inventory
+		//game->info->variable[VAR_INVENTORY_WEIGHT] -= obj_weight;
+	}
+	if (newRoom == kRoomInventory) {
+		// Moving to the player's inventory
+		// game->info->variable[VAR_INVENTORY_WEIGHT] += obj_weight;
+	}
+
+	if (obj->room == _currentRoom) {
+		// Object moved away from the current room
+		//game->info->update_flags |= UPDATE_GRAPHICS;
+
+	} else if (newRoom == _currentRoom) {
+		//
+		// Object moved into the current room. Only the object needs a
+		// redraw, not the whole room.
+		//
+		//game->info->update_flags |= (UPDATE_GRAPHICS_ITEMS |
+		//UPDATE_ITEM_LIST);
+	}
+
+	obj->room = newRoom;
+}
+
+struct object *ComprehendEngine::nounToObject(struct wordIndex *noun) {
+	struct object *obj;
+	int i;
+
+	if (!noun || !(noun->type & kWordNoun))
+		return NULL;
+
+	//
+	// FIXME - in oo-topos the word 'box' matches more than one object
+	//         (the box and the snarl-in-a-box). The player is unable
+	//         to drop the latter because this will match the former.
+	//
+	for (i = 0; i < _gameData->_numObjects; i++) {
+		obj = &_gameData->_objects[i];
+		if (obj->word == noun->index)
+			return obj;
+	}
+
+	return NULL;
+}
+
 void ComprehendEngine::evalInstruction(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) {
-	struct room *room = &_gameData->_rooms[_currentRoom];
+	struct room *room;
+	struct object *obj;
 	uint16 index;
 
 	if (state->orCount)
@@ -118,6 +171,7 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		break;
 
 	case OPCODE_MOVE:
+		room = &_gameData->_rooms[_currentRoom];
 		if (room->direction[verb->index - 1])
 			moveToRoom(room->direction[verb->index - 1]);
 		else
@@ -139,6 +193,88 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	case OPCODE_NOT_IN_ROOM:
 		state->setTestResult(_currentRoom != instr->operand[0]);
+		break;
+
+	case OPCODE_CURRENT_OBJECT_NOT_VALID:
+		state->setTestResult(nounToObject(noun) == NULL);
+		break;
+
+	case OPCODE_CURRENT_OBJECT_PRESENT:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(false);
+		else
+			state->setTestResult(obj->room == _currentRoom);
+		break;
+
+	case OPCODE_CURRENT_OBJECT_NOT_PRESENT:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(true);
+		else
+			state->setTestResult(obj->room != _currentRoom);
+		break;
+
+	case OPCODE_CURRENT_OBJECT_IS_NOWHERE:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(false);
+		else
+			state->setTestResult(obj->room == kRoomNowhere);
+		break;
+
+	case OPCODE_CURRENT_OBJECT_NOT_TAKEABLE:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(false);
+		else
+			state->setTestResult(!(obj->flags & kObjectTakeable));
+		break;
+
+	case OPCODE_HAVE_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(false);
+		else
+			state->setTestResult(obj->room == kRoomInventory);
+		break;
+
+	case OPCODE_SET_ROOM_DESCRIPTION:
+		room = &_gameData->_rooms[instr->operand[0]];
+		// FIXME - common string assignment?
+		switch (instr->operand[2]) {
+		case 0x80:
+			room->description = instr->operand[1];
+			break;
+		case 0x81:
+			room->description = instr->operand[1] + 0x100;
+			break;
+		case 0x82:
+			room->description = instr->operand[1] + 0x200;
+			break;
+		}
+		break;
+
+	case OPCODE_TAKE_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (obj)
+			moveObject(obj, kRoomInventory);
+		break;
+
+	case OPCODE_INVENTORY_FULL:
+		// FIXME - no inventory limit yet
+		state->setTestResult(false);
+		break;
+
+	case OPCODE_CALL_FUNC:
+		index = instr->operand[0];
+		if (instr->operand[1] == 0x81)
+			index += 0x100;
+		evalFunction(&_gameData->_functions[index], verb, noun);
+		break;
+
+	case OPCODE_SAVE_ACTION:
+		// FIXME - implement this
 		break;
 
 	case OPCODE_OR:
