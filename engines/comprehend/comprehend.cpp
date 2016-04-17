@@ -82,7 +82,7 @@ struct functionState {
 
 void ComprehendEngine::moveToRoom(uint8 room) {
 	if (room != _currentRoom)
-		_updateFlags = (kUpdateGraphics | kUpdateRoomDesc | kUpdateItemList);
+		_updateFlags = (kUpdateGraphics | kUpdateRoomDesc | kUpdateObjectList);
 	_currentRoom = room;
 }
 
@@ -102,16 +102,13 @@ void ComprehendEngine::moveObject(struct object *obj, uint8 newRoom) {
 	}
 
 	if (obj->room == _currentRoom) {
-		// Object moved away from the current room
-		//game->info->update_flags |= UPDATE_GRAPHICS;
+		// Object moved away from the current room. Need a full redraw.
+		_updateFlags |= kUpdateGraphics;
 
 	} else if (newRoom == _currentRoom) {
-		//
 		// Object moved into the current room. Only the object needs a
 		// redraw, not the whole room.
-		//
-		//game->info->update_flags |= (UPDATE_GRAPHICS_ITEMS |
-		//UPDATE_ITEM_LIST);
+		_updateFlags |= (kUpdateGraphicsObjects | kUpdateObjectList);
 	}
 
 	obj->room = newRoom;
@@ -239,6 +236,14 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			state->setTestResult(obj->room == kRoomInventory);
 		break;
 
+	case OPCODE_NOT_HAVE_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(true);
+		else
+			state->setTestResult(obj->room != kRoomInventory);
+		break;
+
 	case OPCODE_SET_ROOM_DESCRIPTION:
 		room = &_gameData->_rooms[instr->operand[0]];
 		// FIXME - common string assignment?
@@ -259,6 +264,12 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		obj = nounToObject(noun);
 		if (obj)
 			moveObject(obj, kRoomInventory);
+		break;
+
+	case OPCODE_DROP_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (obj)
+			moveObject(obj, _currentRoom);
 		break;
 
 	case OPCODE_INVENTORY_FULL:
@@ -365,8 +376,9 @@ void ComprehendEngine::update(void) {
 	if (_updateFlags & kUpdateGraphics) {
 		// Draw the current room image
 		_renderer->drawRoomImage(room->graphic - 1);
+	}
 
-		// Draw items
+	if ((_updateFlags & kUpdateGraphics) || (_updateFlags & kUpdateGraphicsObjects)) {
 		for (i = 0; i < _gameData->_numObjects; i++) {
 			obj = &_gameData->_objects[i];
 
@@ -378,7 +390,7 @@ void ComprehendEngine::update(void) {
 	if (_updateFlags & kUpdateRoomDesc)
 		_console->writeWrappedText(_gameData->getString(room->description));
 
-	if (_updateFlags & kUpdateItemList) {
+	if (_updateFlags & kUpdateObjectList) {
 		// FIXME
 	}
 

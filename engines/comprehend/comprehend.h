@@ -13,7 +13,6 @@
 #include "comprehend/parser.h"
 
 namespace Comprehend {
-
 	class GameData;
 
 struct ComprehendGameDescription;
@@ -29,11 +28,12 @@ enum {
 };
 
 enum {
-	kUpdateNone	= 0,
-	kUpdateGraphics = (1 << 0),
-	kUpdateRoomDesc = (1 << 1),
-	kUpdateItemList = (1 << 2),
-	kUpdateAll	= ~0
+	kUpdateNone		= 0,
+	kUpdateGraphics 	= (1 << 0),
+	kUpdateGraphicsObjects	= (1 << 1),
+	kUpdateRoomDesc 	= (1 << 2),
+	kUpdateObjectList 	= (1 << 3),
+	kUpdateAll		= ~0
 };
 
 struct sentence {
