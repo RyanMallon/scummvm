@@ -412,7 +412,16 @@ char *Console::getLine() {
 			}
 		}
 	}
+}
 
+void Console::waitKey() {
+	Common::Event event;
+
+	while (1) {
+		while (g_system->getEventManager()->pollEvent(event))
+			if (event.type == Common::EVENT_KEYDOWN)
+				return;
+	}
 }
 
 } // End of namespace Comprehend

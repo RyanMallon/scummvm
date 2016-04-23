@@ -571,14 +571,15 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 		break;
 
 	case IMAGE_OP_SET_TEXT_POS:
-		// FIXME
-		a = file->readByte();
-		b = file->readByte();
+		_textX = file->readByte();
+		_textY = file->readByte();
 		break;
 
 	case IMAGE_OP_DRAW_CHAR:
-		// FIXME
 		a = file->readByte();
+		drawChar(a, _textX, _textY, _fillColor);
+		updateBox(_textX, _textY, 8, 8);
+		_textX += 8;
 		break;
 
 	case IMAGE_OP_PAINT:

@@ -24,6 +24,7 @@ public:
 	void updateScreen();
 	bool handleKey(int key);
 	char *getLine();
+	void waitKey();
 
 	void updateRect(Common::Rect rect);
 

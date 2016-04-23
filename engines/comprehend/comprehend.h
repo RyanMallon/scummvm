@@ -75,6 +75,8 @@ public:
 	Common::RandomSource *_rnd;
 
 	// Methods provided by game specific engines
+	virtual void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) { }
+
 	virtual int roomType(unsigned roomIndex) {
 		return kRoomNormal;
 	}
@@ -97,6 +99,7 @@ public:
 	ComprehendEngineTransylvania(OSystem *syst, const ComprehendGameDescription *gd) : ComprehendEngine(syst, gd) { }
 
 	int roomType(unsigned roomIndex);
+	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
 };
 
 } // End of namespace Comprehend

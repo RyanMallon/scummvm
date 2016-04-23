@@ -47,6 +47,9 @@ public:
 	uint16 _penX;
 	uint16 _penY;
 
+	uint16 _textX;
+	uint16 _textY;
+
 	uint8 _penColor;
 	uint8 _fillColor;
 	int _currentShape;

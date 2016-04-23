@@ -299,6 +299,11 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			moveObject(obj, kRoomInventory);
 		break;
 
+	case OPCODE_TAKE_OBJECT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		moveObject(obj, kRoomInventory);
+		break;
+
 	case OPCODE_DROP_CURRENT_OBJECT:
 		obj = nounToObject(noun);
 		if (obj)
@@ -355,6 +360,11 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			room->description = instr->operand[1] + 0x200;
 			break;
 		}
+		break;
+
+	case OPCODE_SPECIAL:
+		/* Game specific */
+		handleSpecialOpcode(state, instr, verb, noun);
 		break;
 
 	case OPCODE_CALL_FUNC:
