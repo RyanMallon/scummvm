@@ -70,7 +70,7 @@ struct functionState {
 					testResult = false;
 			} else {
 				testResult = value;
-				isAnd = false;
+				isAnd = true;
 			}
 		} else {
 			// or
@@ -116,7 +116,7 @@ void ComprehendEngine::moveObject(struct object *obj, uint8 newRoom) {
 
 struct object *ComprehendEngine::nounToObject(struct wordIndex *noun) {
 	struct object *obj;
-	int i;
+	size_t i;
 
 	if (!noun || !(noun->type & kWordNoun))
 		return NULL;
@@ -133,6 +133,35 @@ struct object *ComprehendEngine::nounToObject(struct wordIndex *noun) {
 	}
 
 	return NULL;
+}
+
+size_t ComprehendEngine::numObjectsInRoom(uint8 room) {
+	size_t count, i;
+
+	for (i = 0, count = 0; i < _gameData->_numObjects; i++)
+		if (_gameData->_objects[i].room == room)
+			count++;
+
+	return count;
+}
+
+void ComprehendEngine::showInventory(void) {
+	size_t i, numObjects;
+	struct object *obj;
+
+	numObjects = numObjectsInRoom(kRoomInventory);
+	if (numObjects == 0) {
+		_console->writeWrappedText(_gameData->_strings[kStringInventoryEmpty]);
+		return;
+	}
+
+	_console->writeWrappedText(_gameData->_strings[kStringInventory]);
+	for (i = 0; i < _gameData->_numObjects; i++) {
+		obj = &_gameData->_objects[i];
+
+		if (obj->room == kRoomInventory)
+			_console->writeWrappedText(_gameData->getString(obj->description));
+	}
 }
 
 void ComprehendEngine::evalInstruction(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) {
@@ -220,6 +249,16 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			state->setTestResult(obj->room == kRoomNowhere);
 		break;
 
+	case OPCODE_OBJECT_IS_NOWHERE:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room == kRoomNowhere);
+		break;
+
+	case OPCODE_OBJECT_IS_NOT_NOWHERE:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room != kRoomNowhere);
+		break;
+
 	case OPCODE_CURRENT_OBJECT_NOT_TAKEABLE:
 		obj = nounToObject(noun);
 		if (!obj)
@@ -244,6 +283,64 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			state->setTestResult(obj->room != kRoomInventory);
 		break;
 
+	case OPCODE_HAVE_OBJECT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room == kRoomInventory);
+		break;
+
+	case OPCODE_NOT_HAVE_OBJECT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room != kRoomInventory);
+		break;
+
+	case OPCODE_TAKE_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (obj)
+			moveObject(obj, kRoomInventory);
+		break;
+
+	case OPCODE_DROP_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (obj)
+			moveObject(obj, _currentRoom);
+		break;
+
+	case OPCODE_OBJECT_PRESENT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room == _currentRoom);
+		break;
+
+	case OPCODE_OBJECT_NOT_PRESENT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room != _currentRoom);
+		break;
+
+	case OPCODE_MOVE_OBJECT_TO_ROOM:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		moveObject(obj, instr->operand[1]);
+		break;
+
+	case OPCODE_MOVE_OBJECT_TO_CURRENT_ROOM:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		moveObject(obj, _currentRoom);
+		break;
+
+	case OPCODE_REMOVE_OBJECT:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		moveObject(obj, kRoomNowhere);
+		break;
+
+	case OPCODE_REMOVE_CURRENT_OBJECT:
+		obj = nounToObject(noun);
+		if (obj)
+			moveObject(obj, kRoomNowhere);
+		break;
+
+	case OPCODE_INVENTORY_FULL:
+		// FIXME - no inventory limit yet
+		state->setTestResult(false);
+		break;
+
 	case OPCODE_SET_ROOM_DESCRIPTION:
 		room = &_gameData->_rooms[instr->operand[0]];
 		// FIXME - common string assignment?
@@ -260,23 +357,6 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		}
 		break;
 
-	case OPCODE_TAKE_CURRENT_OBJECT:
-		obj = nounToObject(noun);
-		if (obj)
-			moveObject(obj, kRoomInventory);
-		break;
-
-	case OPCODE_DROP_CURRENT_OBJECT:
-		obj = nounToObject(noun);
-		if (obj)
-			moveObject(obj, _currentRoom);
-		break;
-
-	case OPCODE_INVENTORY_FULL:
-		// FIXME - no inventory limit yet
-		state->setTestResult(false);
-		break;
-
 	case OPCODE_CALL_FUNC:
 		index = instr->operand[0];
 		if (instr->operand[1] == 0x81)
@@ -286,6 +366,30 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	case OPCODE_SAVE_ACTION:
 		// FIXME - implement this
+		break;
+
+	case OPCODE_INVENTORY:
+		showInventory();
+		break;
+
+	case OPCODE_SET_FLAG:
+		_gameData->_flags[instr->operand[0]] = 1;
+		break;
+
+	case OPCODE_CLEAR_FLAG:
+		_gameData->_flags[instr->operand[0]] = 0;
+		break;
+
+	case OPCODE_TEST_FLAG:
+		state->setTestResult(_gameData->_flags[instr->operand[0]]);
+		break;
+
+	case OPCODE_TEST_NOT_FLAG:
+		state->setTestResult(!_gameData->_flags[instr->operand[0]]);
+		break;
+
+	case OPCODE_TEST_FALSE:
+		state->setTestResult(false);
 		break;
 
 	case OPCODE_OR:
@@ -303,7 +407,7 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	default:
 		debugN("UNHANDLED: [%.2x] ", instr->opcode);
-		for (int i = 0; i < instr->numOperands(); i++)
+		for (size_t i = 0; i < instr->numOperands(); i++)
 			debugN("%.2x ", instr->operand[i]);
 		debugN("\n");
 		break;
@@ -371,11 +475,19 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 void ComprehendEngine::update(void) {
 	struct room *room = &_gameData->_rooms[_currentRoom];
 	struct object *obj;
-	int i;
+	size_t i;
 
 	if (_updateFlags & kUpdateGraphics) {
 		// Draw the current room image
-		_renderer->drawRoomImage(room->graphic - 1);
+		switch (roomType(_currentRoom)) {
+		case kRoomDark:
+			_renderer->drawDarkRoom();
+			break;
+
+		default:
+			_renderer->drawRoomImage(room->graphic - 1);
+			break;
+		}
 	}
 
 	if ((_updateFlags & kUpdateGraphics) || (_updateFlags & kUpdateGraphicsObjects)) {
@@ -424,7 +536,7 @@ Common::Error ComprehendEngine::run() {
 	_parser = new Parser(_gameData);
 
 	// FIXME - read from data file
-	_currentRoom = 1;
+	_currentRoom = _gameData->_startRoom;
 
 	// TESTING
 	debug("100, 100 = %x\n", _renderer->getPixel(100, 100));

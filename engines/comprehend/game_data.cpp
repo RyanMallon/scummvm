@@ -101,7 +101,7 @@ void GameData::loadActionTableV(void) {
 
 void GameData::loadActions(void) {
 	ActionType type;
-	size_t i, j;
+	size_t i;
 
 	for (i = kActionVVNN; i < kNumActionTypes; i++) {
 		type = static_cast<ActionType>(i);
@@ -141,6 +141,7 @@ void GameData::loadActions(void) {
 		}
 	}
 
+#if 0
 	debug("%u actions", (unsigned)_actions.size());
 	for (i = 0; i < _actions.size(); i++) {
 		debugN("[%.4x] (", (unsigned)i);
@@ -165,6 +166,7 @@ void GameData::loadActions(void) {
 
 		debug(" -> %.4x", _actions[i].function);
 	}
+#endif
 }
 
 uint64 GameData::getEncodedStringChunk(uint8 *encoded) {
@@ -353,6 +355,7 @@ void GameData::loadRooms(void) {
 	readArray8(_header.roomFlags, _rooms, flags, 1, _numRooms);
 	readArray8(_header.roomGraphics, _rooms, graphic, 1, _numRooms);
 
+#if 0
 	debug("%u rooms", (unsigned)_numRooms);
 	for (i = 1; i <= _numRooms; i++)
 		debug("[%.2x] dir=%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x desc=%.4x, flags=%.2x, gfx=%.2x",
@@ -368,10 +371,11 @@ void GameData::loadRooms(void) {
 		      _rooms[i].description,
 		      _rooms[i].flags,
 		      _rooms[i].graphic);
+#endif
 }
 
 void GameData::loadObjects(void) {
-	size_t i;
+	//size_t i;
 
 	// FIXME - use vectors?
 	_numObjects = _header.objectWords - _header.objectFlags;
@@ -383,6 +387,7 @@ void GameData::loadObjects(void) {
 	readArray8(_header.objectRooms, _objects, room, 0, _numObjects);
 	readArray8(_header.objectGraphics, _objects, graphic, 0, _numObjects);
 
+#if 0
 	debug("%u objects", (unsigned)_numObjects);
 	for (i = 0; i < _numObjects; i++)
 		debug("[%.2x] desc=%.4x flags=%.2x word=%.2x room=%.2x gfx=%.2x",
@@ -392,6 +397,7 @@ void GameData::loadObjects(void) {
 		      _objects[i].word,
 		      _objects[i].room,
 		      _objects[i].graphic);
+#endif
 }
 
 void GameData::loadDictionaryWords(void) {
@@ -414,6 +420,7 @@ void GameData::loadDictionaryWords(void) {
 		_words[i].index.type = _mainFile.readByte();
 	}
 
+#if 0
 	debug("%u words", (unsigned)_numWords);
 	for (i = 0; i < _numWords; i++)
 		debug("[%.4x] %.2x:%.2x word=%s",
@@ -421,6 +428,28 @@ void GameData::loadDictionaryWords(void) {
 		      _words[i].index.index,
 		      _words[i].index.type,
 		      _words[i].word);
+#endif
+}
+
+void GameData::loadVariables(void) {
+	int i;
+
+	for (i = 0; i < ARRAYSIZE(_variables); i++)
+		_variables[i] = _mainFile.readUint16LE();
+}
+
+void GameData::loadFlags(void) {
+	int i, bit, index = 0;
+	uint8 bitmask;
+
+	for (i = 0; i < ARRAYSIZE(_flags) / 8; i++) {
+		bitmask = _mainFile.readByte();
+		debug("BITMASK=%.2x", bitmask);
+		for (bit = 7; bit >= 0; bit--) {
+			_flags[index] = !!(bitmask & (1 << bit));
+			index++;
+		}
+	}
 }
 
 void GameData::loadGameData(void) {
@@ -475,6 +504,14 @@ void GameData::loadGameData(void) {
 	// FIXME
 	uint16 dummy;
 	readHeaderAddress(&dummy);
+	readHeaderAddress(&dummy);
+
+	_mainFile.readByte(); // Unknown
+	_startRoom = _mainFile.readByte();
+	_mainFile.readByte(); // Unknown
+
+        loadVariables();
+        loadFlags();
 
 	loadActions();
 	loadRooms();

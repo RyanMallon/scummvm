@@ -36,6 +36,12 @@ enum {
 	kUpdateAll		= ~0
 };
 
+// Room types
+enum {
+	kRoomNormal,
+	kRoomDark
+};
+
 struct sentence {
 	struct wordIndex *word[4];
 	size_t           numWords;
@@ -59,13 +65,21 @@ public:
 
 	struct object *nounToObject(struct wordIndex *noun);
 
+	size_t numObjectsInRoom(uint8 room);
+	void showInventory(void);
+
 	void evalFunction(struct function *func, struct wordIndex *verb, struct wordIndex *noun);
 	void evalInstruction(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
 
 	const ComprehendGameDescription *_gameDescription;
 	Common::RandomSource *_rnd;
 
-private:
+	// Methods provided by game specific engines
+	virtual int roomType(unsigned roomIndex) {
+		return kRoomNormal;
+	}
+
+protected:
 	GameData *_gameData;
 	OpcodeMap *_opcodeMap;
 	ImageManager _imageManager;
@@ -76,6 +90,13 @@ private:
 	// Game state
 	unsigned	_updateFlags;
 	uint8		_currentRoom;
+};
+
+class ComprehendEngineTransylvania : public ComprehendEngine {
+public:
+	ComprehendEngineTransylvania(OSystem *syst, const ComprehendGameDescription *gd) : ComprehendEngine(syst, gd) { }
+
+	int roomType(unsigned roomIndex);
 };
 
 } // End of namespace Comprehend

@@ -61,7 +61,9 @@ public:
 
 bool ComprehendMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
 	if (gd) {
-		*engine = new ComprehendEngine(syst, (const ComprehendGameDescription *)gd);
+		// FIXME
+		*engine = new ComprehendEngineTransylvania(syst, (const ComprehendGameDescription *)gd);
+		//*engine = new ComprehendEngine(syst, (const ComprehendGameDescription *)gd);
 		((ComprehendEngine *)*engine)->initGame((const ComprehendGameDescription *)gd);
 	}
 	return gd != 0;

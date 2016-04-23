@@ -153,6 +153,11 @@ public:
 	Common::Array<char *> _strings;
 	Common::Array<struct function> _functions;
 
+	uint8 _startRoom;
+
+	bool _flags[64];
+	uint16 _variables[128];
+
 	size_t _numRooms;
 	struct room *_rooms;
 
@@ -178,6 +183,8 @@ public:
 	char *decodeString(Common::File &file);
 	void loadStrings(Common::File &file, int32 startOffset, int32 endOffset);
 
+	void loadVariables(void);
+	void loadFlags(void);
 	void loadRooms();
 	void loadObjects();
 	void loadDictionaryWords();

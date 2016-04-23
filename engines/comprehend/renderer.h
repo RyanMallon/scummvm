@@ -28,6 +28,8 @@ public:
 
 	void drawImage(Common::File *file, off_t offset);
 	void drawRoomImage(uint16 index);
+	void drawDarkRoom();
+
 	void drawObjectImage(uint16 index);
 
 	void drawChar(uint8 c, int x, int y, int color);
