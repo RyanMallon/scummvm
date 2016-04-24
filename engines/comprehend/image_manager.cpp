@@ -12,11 +12,11 @@ ImageManager::ImageManager() {
 ImageManager::~ImageManager() {
 }
 
-void ImageManager::init(const char *roomFiles[], size_t numRoomFiles, const char *objectFiles[], size_t numObjectFiles) {
+void ImageManager::init(Common::Array<const char *>roomFiles, Common::Array<const char *>objectFiles) {
 	size_t i;
 
 	// Load room image files
-	for (i = 0; i < numRoomFiles; i++) {
+	for (i = 0; i < roomFiles.size(); i++) {
 		ImageFile *imageFile;
 
 		debug("Adding room image file %s", roomFiles[i]);
@@ -26,7 +26,7 @@ void ImageManager::init(const char *roomFiles[], size_t numRoomFiles, const char
 	}
 
 	// FIXME - object image files
-	for (i = 0; i < numObjectFiles; i++) {
+	for (i = 0; i < objectFiles.size(); i++) {
 		ImageFile *imageFile;
 
 		debug("Adding object image file %s", objectFiles[i]);

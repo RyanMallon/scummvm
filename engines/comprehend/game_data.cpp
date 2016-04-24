@@ -7,6 +7,9 @@
 
 namespace Comprehend {
 
+static char kCharset[]            = "..abcdefghijklmnopqrstuvwxyz .";
+static char kCharsetPunctuation[] = "[]\n!\"#$%&'(),-/0123456789:;?<>";
+
 #define __readArray(type, offset, array, member, base, size)		\
 	do {								\
 		size_t __i;						\
@@ -15,7 +18,7 @@ namespace Comprehend {
 			(array)[__i].member = _mainFile.read##type();	\
 	} while (0)
 
-#define readArray8(offset, array, member, base, size)		\
+#define readArray8(offset, array, member, base, size)			\
 	__readArray(Byte, offset, array, member, base ,size)
 
 #define readArray16(offset, array, member, base, size)			\
@@ -180,9 +183,6 @@ uint64 GameData::getEncodedStringChunk(uint8 *encoded) {
 
 	return val;
 }
-
-static char kCharset[]            = "..abcdefghijklmnopqrstuvwxyz .";
-static char kCharsetPunctuation[] = "[]\n!\"#$%&'(),-/0123456789:;?<>";
 
 char GameData::decodeStringCharacter(uint8 c, bool capital, bool punctuation)
 {

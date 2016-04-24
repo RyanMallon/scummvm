@@ -16,7 +16,7 @@ public:
 	ImageManager();
 	~ImageManager();
 	
-	void init(const char *roomFiles[], size_t numRoomFiles, const char *objectFiles[], size_t numObjectFiles);
+	void init(Common::Array<const char *> roomFiles, Common::Array<const char *> objectFiles);
 };
 
 } // End of namespace Comprehend

@@ -77,6 +77,14 @@ public:
 	// Methods provided by game specific engines
 	virtual void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) { }
 
+	virtual Common::Array<const char *> getRoomImageFiles() const {
+		return Common::Array<const char *>();
+	}
+
+	virtual Common::Array<const char *> getObjectImageFiles() const {
+		return Common::Array<const char *>();
+	}
+
 	virtual int roomType(unsigned roomIndex) {
 		return kRoomNormal;
 	}
@@ -97,6 +105,9 @@ protected:
 class ComprehendEngineTransylvania : public ComprehendEngine {
 public:
 	ComprehendEngineTransylvania(OSystem *syst, const ComprehendGameDescription *gd) : ComprehendEngine(syst, gd) { }
+
+	Common::Array<const char *> getRoomImageFiles() const;
+	Common::Array<const char *> getObjectImageFiles() const;
 
 	int roomType(unsigned roomIndex);
 	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);

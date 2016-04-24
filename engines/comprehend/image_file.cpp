@@ -14,7 +14,6 @@ ImageFile::~ImageFile() {
 
 }
 
-
 void ImageFile::loadHeader(void) {
 	uint16 firstWord;
 	size_t i;

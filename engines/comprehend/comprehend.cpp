@@ -470,7 +470,6 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 				break;
 		}
 		if (j == action->numWords) {
-			debug("Sentence matches function %.4x", action->function);
 			verb = sentence->word[0];
 			if (sentence->numWords > 1)
 				noun = sentence->word[1];
@@ -485,6 +484,7 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 void ComprehendEngine::update(void) {
 	struct room *room = &_gameData->_rooms[_currentRoom];
 	struct object *obj;
+	bool drawObjects = true;
 	size_t i;
 
 	if (_updateFlags & kUpdateGraphics) {
@@ -492,6 +492,7 @@ void ComprehendEngine::update(void) {
 		switch (roomType(_currentRoom)) {
 		case kRoomDark:
 			_renderer->drawDarkRoom();
+			drawObjects = false;
 			break;
 
 		default:
@@ -500,7 +501,7 @@ void ComprehendEngine::update(void) {
 		}
 	}
 
-	if ((_updateFlags & kUpdateGraphics) || (_updateFlags & kUpdateGraphicsObjects)) {
+	if (drawObjects && ((_updateFlags & kUpdateGraphics) || (_updateFlags & kUpdateGraphicsObjects))) {
 		for (i = 0; i < _gameData->_numObjects; i++) {
 			obj = &_gameData->_objects[i];
 
@@ -523,23 +524,11 @@ Common::Error ComprehendEngine::run() {
 	// Initialize graphics using following:
 	initGraphics(320, 200, false);
 
-	// FIXME - hardcoded for testing
-	const char *roomImageFiles[] = {
-		"RA.MS1",
-		"RB.MS1",
-		"RC.MS1",
-	};
-	const char *objectImageFiles[] = {
-		"OA.MS1",
-		"OB.MS1",
-		"OC.MS1",
-	};
-
 	_gameData = new GameData();
 	_gameData->loadGameData();
 	_opcodeMap = new OpcodeMapV1();
 
-	_imageManager.init(roomImageFiles, 3, objectImageFiles, 3);
+	_imageManager.init(getRoomImageFiles(), getObjectImageFiles());
 
 	_renderer = new Renderer(&_imageManager);
 	_console = new Console(_renderer);
@@ -567,7 +556,6 @@ Common::Error ComprehendEngine::run() {
 		update();
 
 		line = _console->getLine();
-		debug("Line: '%s'", line);
 
 		sentences = _parser->readString(line);
 		for (i = 0; i < sentences.size(); i++)

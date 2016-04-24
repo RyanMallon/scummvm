@@ -23,6 +23,7 @@ static const PlainGameDescriptor comprehendGames[] = {
 
 static const ComprehendGameDescription gameDescriptions[] = {
 	{
+		// Transylvania
 		{
 			"tr", 0,
 			AD_ENTRY1("TR.GDA", "22e08633eea02ceee49b909dfd982d22"),
@@ -60,13 +61,24 @@ public:
 };
 
 bool ComprehendMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
-	if (gd) {
+	const ComprehendGameDescription *cgd = (const ComprehendGameDescription *)gd;
+
+	if (cgd) {
 		// FIXME
-		*engine = new ComprehendEngineTransylvania(syst, (const ComprehendGameDescription *)gd);
-		//*engine = new ComprehendEngine(syst, (const ComprehendGameDescription *)gd);
-		((ComprehendEngine *)*engine)->initGame((const ComprehendGameDescription *)gd);
+		switch (cgd->gameType) {
+		case kGameTypeTr:
+			*engine = new ComprehendEngineTransylvania(syst, cgd);
+			break;
+
+		default:
+			return false;
+		}
+
+		// FIXME - unused?
+		((ComprehendEngine *)*engine)->initGame(cgd);
 	}
-	return gd != 0;
+
+	return cgd != 0;
 }
 
 bool ComprehendMetaEngine::hasFeature(MetaEngineFeature f) const {

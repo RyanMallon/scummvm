@@ -1,6 +1,19 @@
+#include "common/array.h"
+
 #include "comprehend/comprehend.h"
 
 namespace Comprehend {
+
+static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
+static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
+
+Common::Array<const char *> ComprehendEngineTransylvania::getRoomImageFiles() const {	
+	return Common::Array<const char *>(roomImageFiles, ARRAYSIZE(roomImageFiles));
+}
+
+Common::Array<const char *> ComprehendEngineTransylvania::getObjectImageFiles() const {	
+	return Common::Array<const char *>(objectImageFiles, ARRAYSIZE(objectImageFiles));
+}
 
 int ComprehendEngineTransylvania::roomType(unsigned roomIndex) {
 	if (roomIndex == 0x28)
