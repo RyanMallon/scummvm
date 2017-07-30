@@ -47,6 +47,11 @@ struct sentence {
 	size_t           numWords;
 };
 
+struct StringFile {
+	const char	*name;
+	off_t		offset;
+};
+
 class ComprehendEngine : public Engine {
 public:
 	ComprehendEngine(OSystem *syst, const ComprehendGameDescription *gd);
@@ -77,6 +82,14 @@ public:
 	// Methods provided by game specific engines
 	virtual void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) { }
 
+	virtual const char *getMainDataFile() const {
+		return nullptr;
+	}
+
+	virtual Common::Array<struct StringFile> getStringFiles() const {
+		return Common::Array<struct StringFile>();
+	};
+
 	virtual Common::Array<const char *> getRoomImageFiles() const {
 		return Common::Array<const char *>();
 	}
@@ -102,9 +115,13 @@ protected:
 	uint8		_currentRoom;
 };
 
+// FIXME - move to own file
 class ComprehendEngineTransylvania : public ComprehendEngine {
 public:
 	ComprehendEngineTransylvania(OSystem *syst, const ComprehendGameDescription *gd) : ComprehendEngine(syst, gd) { }
+
+	const char *getMainDataFile() const;
+	Common::Array<struct StringFile> getStringFiles() const;
 
 	Common::Array<const char *> getRoomImageFiles() const;
 	Common::Array<const char *> getObjectImageFiles() const;

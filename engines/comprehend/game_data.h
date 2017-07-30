@@ -171,7 +171,7 @@ public:
 
 	GameData();
 	~GameData();
-	void loadGameData();
+	void loadGameData(const char *mainDataFile, Common::Array<struct StringFile> stringFiles);
 
 	bool readActionTableHeader(uint8 *word, uint8 *count);
 	void loadActionTable(ActionType type, size_t numWords, WordType word1, WordType word2, WordType word3, WordType word4, size_t headerWordIndex);
@@ -181,7 +181,8 @@ public:
 	uint64 getEncodedStringChunk(uint8 *encoded);
 	char decodeStringCharacter(uint8 c, bool capital, bool punctuation);
 	char *decodeString(Common::File &file);
-	void loadStrings(Common::File &file, int32 startOffset, int32 endOffset);
+	unsigned loadStrings(Common::File &file, unsigned index, int32 startOffset, int32 endOffset);
+	void loadExtraStrings(Common::Array<struct StringFile> stringFiles);
 
 	void loadVariables(void);
 	void loadFlags(void);

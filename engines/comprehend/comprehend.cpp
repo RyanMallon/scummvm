@@ -525,7 +525,7 @@ Common::Error ComprehendEngine::run() {
 	initGraphics(320, 200, false);
 
 	_gameData = new GameData();
-	_gameData->loadGameData();
+	_gameData->loadGameData(getMainDataFile(), getStringFiles());
 	_opcodeMap = new OpcodeMapV1();
 
 	_imageManager.init(getRoomImageFiles(), getObjectImageFiles());

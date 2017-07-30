@@ -261,8 +261,9 @@ done:
 	return string;
 }
 
-void GameData::loadStrings(Common::File &file, int32 startOffset, int32 endOffset) {
+unsigned GameData::loadStrings(Common::File &file, unsigned index, int32 startOffset, int32 endOffset) {
 	char *string;
+	unsigned count = 0;
 
 	file.seek(startOffset, SEEK_SET);
 	while (1) {
@@ -270,22 +271,35 @@ void GameData::loadStrings(Common::File &file, int32 startOffset, int32 endOffse
 		if (!string || file.pos() >= endOffset)
 			break;
 
-		_strings.push_back(string);
+		_strings.insert_at(index + count, string);
+		count++;
 	}
 
-#if 0
-	size_t i;
-	debug("%u strings", _strings.size());
-	for (i = 0; i < _strings.size(); i++)
-		debug("[%.4x] %s", i, _strings[i]);
-#endif
+	return count;
+}
+
+void GameData::loadExtraStrings(Common::Array<struct StringFile> stringFiles) {
+	Common::File file;
+	unsigned i, index;
+
+	for (i = 0; i < stringFiles.size(); i++) {
+		if (!file.open(stringFiles[i].name))
+			error("String file %s not found", stringFiles[i].name);
+
+		index = 0x200 + (i * 40) + (i == 0 ? 1 : 0);
+		_strings.resize(index);
+		loadStrings(file, index, stringFiles[i].offset, file.size());
+		file.close();
+	}
 }
 
 const char *GameData::getString(uint16 index) {
 	index &= 0x7fff;
 
-	if (index >= _strings.size())
+	if (index >= _strings.size() || !_strings[index]) {
+		debug("Bad string index %.4x", (unsigned)index);
 		return "BAD_STRING";
+	}
 
 	return _strings[index];
 }
@@ -452,9 +466,11 @@ void GameData::loadFlags(void) {
 	}
 }
 
-void GameData::loadGameData(void) {
- 	if (!_mainFile.open("TR.GDA"))
-		error("File not found: %s", "TR.GDA");
+void GameData::loadGameData(const char *mainDataFile, Common::Array<struct StringFile> stringFiles) {
+	uint16 dummy, stringsEnd;
+
+	if (!_mainFile.open(mainDataFile))
+		error("Main data file %s not found", mainDataFile);
 
 	// Read header
 	_header.magic = _mainFile.readUint16LE();
@@ -502,9 +518,8 @@ void GameData::loadGameData(void) {
 	readHeaderAddress(&_header.strings);
 
 	// FIXME
-	uint16 dummy;
 	readHeaderAddress(&dummy);
-	readHeaderAddress(&dummy);
+	readHeaderAddress(&stringsEnd);
 
 	_mainFile.readByte(); // Unknown
 	_startRoom = _mainFile.readByte();
@@ -517,7 +532,17 @@ void GameData::loadGameData(void) {
 	loadRooms();
 	loadObjects();
 	loadDictionaryWords();
-	loadStrings(_mainFile, _header.strings, dummy);
+
+	loadStrings(_mainFile, 0, _header.strings, stringsEnd);
+	loadExtraStrings(stringFiles);
+
+#if 0
+	size_t i;
+	debug("%u strings", _strings.size());
+	for (i = 0; i < _strings.size(); i++)
+		debug("[%.4x] %s", i, _strings[i]);
+#endif
+
 	loadFunctions();
 }
 

@@ -7,6 +7,22 @@ namespace Comprehend {
 static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
 static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
 
+static const struct StringFile stringFiles[] = {
+	{"MA.MS1", 0x88},
+	{"MB.MS1", 0x88},
+	{"MC.MS1", 0x88},
+	{"MD.MS1", 0x88},
+	{"ME.MS1", 0x88},
+};
+
+const char *ComprehendEngineTransylvania::getMainDataFile() const {
+	return "TR.GDA";
+}
+
+Common::Array<struct StringFile> ComprehendEngineTransylvania::getStringFiles() const {
+	return Common::Array<struct StringFile>(stringFiles, ARRAYSIZE(stringFiles));
+}
+
 Common::Array<const char *> ComprehendEngineTransylvania::getRoomImageFiles() const {	
 	return Common::Array<const char *>(roomImageFiles, ARRAYSIZE(roomImageFiles));
 }
