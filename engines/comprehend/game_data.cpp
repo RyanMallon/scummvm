@@ -286,7 +286,7 @@ void GameData::loadExtraStrings(Common::Array<struct StringFile> stringFiles) {
 		if (!file.open(stringFiles[i].name))
 			error("String file %s not found", stringFiles[i].name);
 
-		index = 0x200 + (i * 40) + (i == 0 ? 1 : 0);
+		index = 0x200 + (i * 0x40) + (i == 0 ? 1 : 0);
 		_strings.resize(index);
 		loadStrings(file, index, stringFiles[i].offset, file.size());
 		file.close();
