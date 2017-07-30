@@ -487,18 +487,18 @@ void ComprehendEngine::update(void) {
 	bool drawObjects = true;
 	size_t i;
 
-	if (_updateFlags & kUpdateGraphics) {
-		// Draw the current room image
-		switch (roomType(_currentRoom)) {
-		case kRoomDark:
+	// Draw the current room image
+	switch (roomType(_currentRoom)) {
+	case kRoomDark:
+		if (_updateFlags & kUpdateGraphics)
 			_renderer->drawDarkRoom();
-			drawObjects = false;
-			break;
+		drawObjects = false;
+		break;
 
-		default:
+	default:
+		if (_updateFlags & kUpdateGraphics)
 			_renderer->drawRoomImage(room->graphic - 1);
-			break;
-		}
+		break;
 	}
 
 	if (drawObjects && ((_updateFlags & kUpdateGraphics) || (_updateFlags & kUpdateGraphicsObjects))) {
