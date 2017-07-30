@@ -537,13 +537,6 @@ Common::Error ComprehendEngine::run() {
 	// FIXME - read from data file
 	_currentRoom = _gameData->_startRoom;
 
-	// TESTING
-	debug("100, 100 = %x\n", _renderer->getPixel(100, 100));
-	debug("100, 190 = %x\n", _renderer->getPixel(100, 190));
-
-	// Additional setup.
-	debug("Comprehend::init");
-
 	_updateFlags = kUpdateAll;
 	while (1) {
 		Common::Array<struct sentence> sentences;
