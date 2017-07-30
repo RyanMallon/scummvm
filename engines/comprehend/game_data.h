@@ -64,6 +64,10 @@ enum DefaultStrings {
 	kStringRestoreGame    = 7
 };
 
+enum VariableNames {
+	kVarTurnCounter  = 2
+};
+
 struct room {
 	uint8  direction[Comprehend::kNumDirections];
 	uint8  flags;

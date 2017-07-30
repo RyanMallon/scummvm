@@ -191,6 +191,40 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 	}
 
 	switch (_opcodeMap->_map[instr->opcode]) {
+	case OPCODE_VAR_ADD:
+		_gameData->_variables[instr->operand[0]] += _gameData->_variables[instr->operand[1]];
+		break;
+
+	case OPCODE_VAR_SUB:
+		_gameData->_variables[instr->operand[0]] -= _gameData->_variables[instr->operand[1]];
+		break;
+
+	case OPCODE_VAR_INC:
+		_gameData->_variables[instr->operand[0]]++;
+		break;
+
+	case OPCODE_VAR_DEC:
+		_gameData->_variables[instr->operand[0]]--;
+		break;
+
+	case OPCODE_VAR_EQ:
+		state->setTestResult(_gameData->_variables[instr->operand[0]] == _gameData->_variables[instr->operand[1]]);
+		break;
+
+	case OPCODE_TURN_TICK:
+		_gameData->_variables[kVarTurnCounter]++;
+		break;
+
+	case OPCODE_TEST_ROOM_FLAG:
+		room = &_gameData->_rooms[_currentRoom];
+		state->setTestResult(room->flags & instr->operand[0]);
+		break;
+
+	case OPCODE_TEST_NOT_ROOM_FLAG:
+		room = &_gameData->_rooms[_currentRoom];
+		state->setTestResult(!(room->flags & instr->operand[0]));
+		break;
+
 	case OPCODE_PRINT:
 		index = (instr->operand[1] << 8 | instr->operand[0]);
 		_console->writeWrappedText(_gameData->getString(index));
@@ -257,6 +291,11 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 	case OPCODE_OBJECT_IS_NOT_NOWHERE:
 		obj = &_gameData->_objects[instr->operand[0] - 1];
 		state->setTestResult(obj->room != kRoomNowhere);
+		break;
+
+	case OPCODE_OBJECT_IN_ROOM:
+		obj = &_gameData->_objects[instr->operand[0] - 1];
+		state->setTestResult(obj->room == instr->operand[1]);
 		break;
 
 	case OPCODE_CURRENT_OBJECT_NOT_TAKEABLE:
@@ -546,6 +585,10 @@ Common::Error ComprehendEngine::run() {
 		if (shouldQuit())
 			break;
 
+		/* Run the each turn functions */
+		evalFunction(&_gameData->_functions[0], NULL, NULL);
+
+		/* Update graphics */
 		update();
 
 		line = _console->getLine();
