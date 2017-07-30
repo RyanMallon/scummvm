@@ -520,6 +520,25 @@ void ComprehendEngine::handleSentence(struct sentence *sentence) {
 	_console->writeWrappedText(_gameData->_strings[kStringDontUnderstand]);
 }
 
+void ComprehendEngine::describeObjectsInCurrentRoom(void) {
+	bool printedHeader = false;
+	struct object *obj;
+	size_t i;
+
+	for (i = 0; i < _gameData->_numObjects; i++) {
+		obj = &_gameData->_objects[i];
+
+		if (obj->room == _currentRoom && obj->description != 0) {
+			if (!printedHeader) {
+				_console->writeWrappedText(_gameData->_strings[kStringYouSee]);
+				printedHeader = true;
+			}
+
+			_console->writeWrappedText(_gameData->getString(obj->description));
+		}
+	}
+}
+
 void ComprehendEngine::update(void) {
 	struct room *room = &_gameData->_rooms[_currentRoom];
 	struct object *obj;
@@ -552,9 +571,8 @@ void ComprehendEngine::update(void) {
 	if (_updateFlags & kUpdateRoomDesc)
 		_console->writeWrappedText(_gameData->getString(room->description));
 
-	if (_updateFlags & kUpdateObjectList) {
-		// FIXME
-	}
+	if ((_updateFlags & kUpdateObjectList) && roomType(_currentRoom) == kRoomNormal)
+		describeObjectsInCurrentRoom();
 
 	_updateFlags = kUpdateNone;
 }

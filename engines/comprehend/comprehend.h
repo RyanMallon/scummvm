@@ -64,6 +64,7 @@ public:
 	virtual Common::Error run();
 	void handleSentence(struct sentence *sentence);
 
+	void describeObjectsInCurrentRoom(void);
 	void update(void);
 	void moveToRoom(uint8 room);
 	void moveObject(struct object *obj, uint8 newRoom);
