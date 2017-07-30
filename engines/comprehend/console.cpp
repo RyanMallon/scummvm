@@ -13,9 +13,10 @@ namespace Comprehend {
 static const int kMaxCharsPerLine        =  40;
 static const int kCharSize               =   8;
 static const int kBottomLine             = 200 - kCharSize;
+static const int kGraphicsModeNumLines   = 5;
 
 static const int kTextModeTop            = 0;
-static const int kGraphicsModeTop        = 200 - (5 * kCharSize);
+static const int kGraphicsModeTop        = 200 - (kGraphicsModeNumLines * kCharSize);
 
 static const char kPromptChar            = '>';
 static const char kReplaceChar           = '@';
@@ -158,6 +159,8 @@ Console::Console(Renderer *renderer) : _renderer(renderer) {
 	_promptBlinkState = 0;
 	_promptUpdateTime = 0;
 
+	_xOffset = 0;
+	_scrollCount = 0;
 	_inputCount = 0;
 
 	// Flip between two surfaces for scrolling
@@ -187,7 +190,12 @@ void Console::updateScreen() {
 void Console::scrollUp(bool pause) {
 	uint16 width, height;
 
-	// FIXME - handle pause
+	_scrollCount++;
+	if (_scrollCount == kGraphicsModeNumLines) {
+		if (pause)
+			waitKey();
+		_scrollCount = 0;
+	}
 
 	width  = _surfs[_currentSurf].w;
 	height = _surfs[_currentSurf].h;
@@ -206,7 +214,7 @@ void Console::scrollUp(bool pause) {
 	updateScreen();
 }
 
-void Console::clearChar() {
+void Console::clearChar(void) {
 	Common::Rect rect(_xOffset, kBottomLine, _xOffset + kCharSize, kBottomLine + kCharSize);
 
 	_surfs[_currentSurf].fillRect(rect, Renderer::kColorBlack);
@@ -219,6 +227,11 @@ void Console::drawChar(uint8 c) {
 
 	if (c >= 128)
 		return;
+
+	if (_xOffset >= kCharSize * kMaxCharsPerLine) {
+		debug("Attempting to render char '%c' at illegal offset %d", c, _xOffset);
+		return;
+	}
 
 	charData = &dosFont[c * 8];
 	for (i = 0; i < kCharSize; i++) {
@@ -240,8 +253,6 @@ void Console::drawChar(uint8 c) {
 
 void Console::nextChar(void) {
 	_xOffset += kCharSize;
-	if (_xOffset >= kCharSize * kMaxCharsPerLine)
-		scrollUp(false);
 }
 
 void Console::drawString(const char *str, size_t len) {
@@ -253,26 +264,18 @@ void Console::drawString(const char *str, size_t len) {
 	}
 }
 
-void Console::drawPrompt() {
-	// FIXME
-	scrollUp(false);
+void Console::drawPrompt(void) {
 	drawChar('>');
 	nextChar();
 }
 
 void Console::writeWrappedText(const char *text) {
-	// FIXME - need to handle replacement words
-	scrollUp(false);
-	drawString(text, strlen(text));
-
-#if 0
 	const char *p, *replace, *word;
 	size_t wordLen, lineLength;
 
 	word = NULL;
 	lineLength = 0;
 	p = text;
-
 
 	while (p && *p) {
 		switch (*p) {
@@ -309,17 +312,12 @@ void Console::writeWrappedText(const char *text) {
 		if (!word || !wordLen)
 			continue;
 
-		// Print this word
-#if 0
 		if (lineLength + wordLen > kMaxCharsPerLine) {
 			// Too long - scroll up
 			lineLength = 0;
 			scrollUp(true);
-			debug("too long - scroll");
 		}
-#endif
 
-		debug("print '%.*s'", wordLen, word);
 		drawString(word, wordLen);
 		lineLength += wordLen;
 
@@ -339,7 +337,8 @@ void Console::writeWrappedText(const char *text) {
 				p++;
 		}
 	}
-#endif
+
+	scrollUp(true);
 }
 
 bool Console::handleKey(int key) {
@@ -378,12 +377,12 @@ bool Console::handleKey(int key) {
 	return false;
 }
 
-char *Console::getLine() {
+char *Console::getLine(void) {
 	Common::Event event;
-	bool done;
+	bool done = false;
 
 	drawPrompt();
-	while (1) {
+	while (!done) {
 		// Blinking cursor
 		if (g_system->getMillis() > _promptUpdateTime + kPromptUpdateTimeout) {
 			if (_promptBlinkState)
@@ -396,15 +395,12 @@ char *Console::getLine() {
 			//updateScreen();
 		}
 
-		while (g_system->getEventManager()->pollEvent(event)) {
+		while (!done && g_system->getEventManager()->pollEvent(event)) {
 			switch (event.type) {
 			case Common::EVENT_KEYDOWN:
 				// Ensure blinking prompt is not visible
 				clearChar();
-
 				done = handleKey(event.kbd.keycode);
-				if (done)
-					return _inputBuffer;
 				break;
 
 			default:
@@ -412,6 +408,10 @@ char *Console::getLine() {
 			}
 		}
 	}
+
+	scrollUp(false);
+	_scrollCount = 0;
+	return _inputBuffer;
 }
 
 void Console::waitKey() {

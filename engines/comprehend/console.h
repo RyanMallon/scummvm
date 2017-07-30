@@ -8,20 +8,20 @@ namespace Comprehend {
 class ComprehendEngine;
 
 class Console {
-public:	
+public:
 	Console(Renderer *renderer);
 	~Console();
 
 	void scrollUp(bool pause);
 
-	void clearChar();
+	void clearChar(void);
 	void drawChar(uint8 c);
 
 	void nextChar(void);
 	void drawString(const char *str, size_t len);
-	void drawPrompt();
-	void writeWrappedText(const char *text);	
-	void updateScreen();
+	void drawPrompt(void);
+	void writeWrappedText(const char *text);
+	void updateScreen(void);
 	bool handleKey(int key);
 	char *getLine();
 	void waitKey();
@@ -33,6 +33,7 @@ public:
 	Graphics::Surface _surfs[2];
 	int _currentSurf;
 
+	size_t _scrollCount;
 	int _xOffset;
 	char _inputBuffer[100];
 	unsigned int _inputCount;
@@ -44,4 +45,3 @@ public:
 } // End of namespace Comprehend
 
 #endif // COMPREHEND_CONSOLE_H
-
