@@ -605,7 +605,7 @@ void Renderer::doImageOpcode(Common::File *file, uint8 opcode) {
 		// FIXME
 		break;
 
-	case IMAGE_OP_FILL_COLOR:		
+	case IMAGE_OP_FILL_COLOR:
 		_fillColor = file->readByte();
 		debugC(1, Comprehend::kDebugGraphics, "set_fill_color(%.2x)", _fillColor);
 		break;
