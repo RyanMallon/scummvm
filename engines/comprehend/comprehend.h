@@ -66,6 +66,13 @@ public:
 
 	void describeObjectsInCurrentRoom(void);
 	void update(void);
+
+	virtual void beforeTurn(void) { }
+
+	bool randomly(uint8 value);
+
+	bool playerInRoom(uint8 room);
+	bool objectInRoom(uint8 obj, uint8 room);
 	void moveToRoom(uint8 room);
 	void moveObject(struct object *obj, uint8 newRoom);
 

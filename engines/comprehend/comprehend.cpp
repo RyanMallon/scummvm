@@ -80,6 +80,21 @@ struct functionState {
 	}
 };
 
+bool ComprehendEngine::randomly(uint8 value) {
+	return _rnd->getRandomNumberRng(0, 255) >= value;
+}
+
+bool ComprehendEngine::playerInRoom(uint8 room) {
+	return _currentRoom == room;
+}
+
+bool ComprehendEngine::objectInRoom(uint8 obj, uint8 room) {
+	if (obj >= _gameData->_numObjects)
+		return false;
+
+	return _gameData->_objects[obj].room == room;
+}
+
 void ComprehendEngine::moveToRoom(uint8 room) {
 	if (room != _currentRoom)
 		_updateFlags = (kUpdateGraphics | kUpdateRoomDesc | kUpdateObjectList);
