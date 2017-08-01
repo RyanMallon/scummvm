@@ -229,7 +229,7 @@ void Console::drawChar(uint8 c) {
 		return;
 
 	if (_xOffset >= kCharSize * kMaxCharsPerLine) {
-		debug("Attempting to render char '%c' at illegal offset %d", c, _xOffset);
+		debug("Attempting to render char '%c' (%02x) at illegal offset %d", c, c, _xOffset);
 		return;
 	}
 
@@ -289,6 +289,8 @@ void Console::writeWrappedText(const char *text) {
 
 		case kReplaceChar:
 			// FIXME
+			word = "[FIXME]";
+			wordLen = strlen(word);
 			p++;
 			break;
 
@@ -300,7 +302,7 @@ void Console::writeWrappedText(const char *text) {
 
 			 // If this word contains a replacement symbol, then
 			 // print everything before the symbol.
-			replace = strchr(p, kReplaceChar);
+			replace = (const char *)memchr(p, kReplaceChar, wordLen);
 			if (replace)
 				wordLen = replace - p;
 
@@ -320,6 +322,7 @@ void Console::writeWrappedText(const char *text) {
 
 		drawString(word, wordLen);
 		lineLength += wordLen;
+		wordLen = 0;
 
 		if (*p == ' ') {
 			if (lineLength >= kMaxCharsPerLine) {
