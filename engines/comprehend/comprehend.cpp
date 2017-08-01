@@ -469,6 +469,10 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		state->testResult = state->elseResult;
 		break;
 
+	case OPCODE_SET_STRING_REPLACEMENT:
+		// FIXME
+		break;
+
 	default:
 		debugN("UNHANDLED: [%.2x] ", instr->opcode);
 		for (size_t i = 0; i < instr->numOperands(); i++)
