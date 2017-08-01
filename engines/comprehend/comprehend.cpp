@@ -611,7 +611,7 @@ Common::Error ComprehendEngine::run() {
 
 	_updateFlags = kUpdateAll;
 	while (1) {
-		Common::Array<struct sentence> sentences;
+		Common::Array<struct sentence *> sentences;
 		char *line;
 		size_t i;
 
@@ -627,9 +627,9 @@ Common::Error ComprehendEngine::run() {
 
 		line = _console->getLine();
 
-		sentences = _parser->readString(line);
+		_parser->readString(sentences, line);
 		for (i = 0; i < sentences.size(); i++)
-			handleSentence(&sentences[i]);
+			handleSentence(sentences[i]);
 	}
 
 	return Common::kNoError;

@@ -2,6 +2,7 @@
 #include "common/array.h"
 #include "common/debug.h"
 
+#include "comprehend/comprehend.h"
 #include "comprehend/game_data.h"
 #include "comprehend/parser.h"
 
@@ -13,12 +14,11 @@ Parser::Parser(GameData *gameData) : _gameData(gameData) {
 Parser::~Parser() {
 }
 
-Common::Array<struct sentence> Parser::readString(const char *string) {
+void Parser::readString(Common::Array<struct sentence *> &sentences, const char *string) {
 	Common::StringTokenizer tokenizer(Common::String(string), " ,");
 	Common::String token;
 	Common::Array<struct wordIndex *> words;
-	Common::Array<struct sentence> sentences;
-	struct sentence sentence;
+	struct sentence *sentence;
 	size_t i;
 
 	// Convert the string to an array of dictionary words
@@ -28,12 +28,11 @@ Common::Array<struct sentence> Parser::readString(const char *string) {
 	}
 
 	// FIXME - currently just returning first four words
-	sentence.numWords = MIN(4, (int)words.size());
-	for (i = 0; i < sentence.numWords; i++)
-		sentence.word[i] = words[i];
+	sentence = new struct sentence();
+	sentence->numWords = MIN(4, (int)words.size());
+	for (i = 0; i < sentence->numWords; i++)
+		sentence->word[i] = words[i];
 	sentences.push_back(sentence);
-       
-	return sentences;
 }
 
 } // namespace Comprehend

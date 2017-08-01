@@ -15,7 +15,7 @@ public:
 	Parser(GameData *gameData);
 	~Parser();
 
-	Common::Array<struct sentence> readString(const char *string);
+	void readString(Common::Array<struct sentence *> &sentences, const char *string);
 
 	GameData *_gameData;
 };
