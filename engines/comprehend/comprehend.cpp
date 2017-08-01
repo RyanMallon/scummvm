@@ -619,6 +619,7 @@ Common::Error ComprehendEngine::run() {
 			break;
 
 		/* Run the each turn functions */
+		beforeTurn();
 		evalFunction(&_gameData->_functions[0], NULL, NULL);
 
 		/* Update graphics */

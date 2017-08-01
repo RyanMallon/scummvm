@@ -136,6 +136,7 @@ public:
 
 	int roomType(unsigned roomIndex);
 	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
+	void beforeTurn(void);
 };
 
 } // End of namespace Comprehend
