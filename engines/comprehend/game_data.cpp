@@ -458,7 +458,6 @@ void GameData::loadFlags(void) {
 
 	for (i = 0; i < ARRAYSIZE(_flags) / 8; i++) {
 		bitmask = _mainFile.readByte();
-		debug("BITMASK=%.2x", bitmask);
 		for (bit = 7; bit >= 0; bit--) {
 			_flags[index] = !!(bitmask & (1 << bit));
 			index++;

@@ -19,7 +19,6 @@ void ImageManager::init(Common::Array<const char *>roomFiles, Common::Array<cons
 	for (i = 0; i < roomFiles.size(); i++) {
 		ImageFile *imageFile;
 
-		debug("Adding room image file %s", roomFiles[i]);
 		imageFile = new ImageFile(roomFiles[i]);
 		imageFile->loadHeader();
 		_roomImageFiles.push_back(imageFile);
@@ -29,7 +28,6 @@ void ImageManager::init(Common::Array<const char *>roomFiles, Common::Array<cons
 	for (i = 0; i < objectFiles.size(); i++) {
 		ImageFile *imageFile;
 
-		debug("Adding object image file %s", objectFiles[i]);
 		imageFile = new ImageFile(objectFiles[i]);
 		imageFile->loadHeader();
 		_objectImageFiles.push_back(imageFile);
