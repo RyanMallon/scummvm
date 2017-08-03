@@ -507,7 +507,7 @@ void Renderer::drawShape(int x, int y, int shape, int color) {
 		break;
 
 	default:
-		debug("Unknown shape: %d", shape);
+		//debug("Unknown shape: %d", shape);
 		break;
 	}
 }

@@ -389,8 +389,6 @@ void GameData::loadRooms(void) {
 }
 
 void GameData::loadObjects(void) {
-	//size_t i;
-
 	// FIXME - use vectors?
 	_numObjects = _header.objectWords - _header.objectFlags;
 	_objects = new struct object[_numObjects];
@@ -403,7 +401,7 @@ void GameData::loadObjects(void) {
 
 #if 0
 	debug("%u objects", (unsigned)_numObjects);
-	for (i = 0; i < _numObjects; i++)
+	for (size_t i = 0; i < _numObjects; i++)
 		debug("[%.2x] desc=%.4x flags=%.2x word=%.2x room=%.2x gfx=%.2x",
 		      (unsigned)i,
 		      _objects[i].description,
