@@ -80,6 +80,13 @@ struct functionState {
 	}
 };
 
+struct object *ComprehendEngine::getObject(int index) {
+	if (index <= 0 || index > (int)_gameData->_numObjects)
+		return NULL;
+
+	return &_gameData->_objects[index - 1];
+}
+
 bool ComprehendEngine::randomly(uint8 value) {
 	return _rnd->getRandomNumberRng(0, 255) >= value;
 }
@@ -88,11 +95,13 @@ bool ComprehendEngine::playerInRoom(uint8 room) {
 	return _currentRoom == room;
 }
 
-bool ComprehendEngine::objectInRoom(uint8 obj, uint8 room) {
-	if (obj >= _gameData->_numObjects)
-		return false;
+bool ComprehendEngine::objectInRoom(uint8 objIndex, uint8 room) {
+	struct object *obj;
 
-	return _gameData->_objects[obj].room == room;
+	obj = getObject(objIndex);
+	if (obj)
+		return obj->room == room;
+	return false;
 }
 
 void ComprehendEngine::moveToRoom(uint8 room) {
@@ -127,6 +136,14 @@ void ComprehendEngine::moveObject(struct object *obj, uint8 newRoom) {
 	}
 
 	obj->room = newRoom;
+}
+
+void ComprehendEngine::moveObject(int objIndex, uint8 newRoom) {
+	struct object *obj;
+
+	obj = getObject(objIndex);
+	if (obj)
+		moveObject(obj, newRoom);
 }
 
 struct object *ComprehendEngine::nounToObject(struct wordIndex *noun) {

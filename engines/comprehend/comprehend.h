@@ -71,10 +71,12 @@ public:
 
 	bool randomly(uint8 value);
 
+	struct object *getObject(int index);
 	bool playerInRoom(uint8 room);
 	bool objectInRoom(uint8 obj, uint8 room);
 	void moveToRoom(uint8 room);
 	void moveObject(struct object *obj, uint8 newRoom);
+	void moveObject(int objIndex, uint8 newRoom);
 
 	struct object *nounToObject(struct wordIndex *noun);
 
