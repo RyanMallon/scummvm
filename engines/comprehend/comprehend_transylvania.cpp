@@ -5,6 +5,33 @@
 
 namespace Comprehend {
 
+// Flags
+static const int kFlagVampireDead = 5;
+static const int kFlagWerewolfDead = 7;
+
+// Rooms
+static const int kRoomHutInterior = 0x7;
+static const int kRoomGoblin = 0x1a;
+static const int kRoomFlagForest = (1 << 6);
+static const int kRoomFlagCastle = (1 << 7);
+
+// Objects
+static const int kObjectGoblin = 0x0a;
+static const int kObjectCat = 0x18;
+static const int kObjectGarlic = 0x20;
+static const int kObjectWerewolf = 0x22;
+static const int kObjectVampire = 0x27;
+
+// Strings
+static const int kStringMeow = 0x6d;
+static const int kStringForestMessageBase = 0x62;
+static const int kStringEagle = 0x6b;
+static const int kStringGoblinMessageBase = 0x5e;
+static const int kStringGoblinMessageEnd = 0x61;
+
+// Variables
+static const int kVarTimeout = 0x0f;
+
 static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
 static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
 
@@ -60,6 +87,8 @@ void ComprehendEngineTransylvania::handleSpecialOpcode(struct functionState *sta
 		// Game over - lose
 	case 0x05:
 		// Game over - win
+		_console->waitKey();
+		quitGame();
 		break;
 
 	case 0x09:
@@ -71,50 +100,53 @@ void ComprehendEngineTransylvania::handleSpecialOpcode(struct functionState *sta
 	}
 }
 
-/*
-
-if (!in_current_room(vampire)) {
-    moveObject(vampire, nowhere);
-}
-
-..
-
-if (inRoom(hut)) {
-    if (inCurrentRoom(cat)) {
-        if (random(0.5)) {
-            showString(0x6d); // loud hissing meow
-        }
-    }
-}
-
-*/
-
-// Rooms
-static const int kRoomHutInterior = 0x7;
-static const int kRoomFlagForest = (1 << 6);
-
-// Objects
-static const int kObjectCat = 0x18;
-
-// Strings
-static const int kStringMeow = 0x6d;
-static const int kStringForestMessageBase = 0x62;
-static const int kStringEagle = 0x6b;
-
 void ComprehendEngineTransylvania::beforeTurn(void) {
 	struct room *curRoom = &_gameData->_rooms[_currentRoom];
-	int stringIndex, roomIndex;
+	int stringIndex, roomIndex, turnCount;
 
+	turnCount = _gameData->_variables[kVarTurnCounter];
+
+	if (getObject(kObjectVampire)->room != _currentRoom)
+		moveObject(kObjectVampire, kRoomNowhere);
+	if (getObject(kObjectWerewolf)->room != _currentRoom)
+		moveObject(kObjectWerewolf, kRoomNowhere);
+
+	//
 	// 50% chance for the cat to meow at the player in the hut
-	if (playerInRoom(kRoomHutInterior) && objectInRoom(kObjectCat, kRoomHutInterior) && randomly(128))
-		_console->writeWrappedText(_gameData->getString(kStringMeow));
+	//
+	if (playerInRoom(kRoomHutInterior)) {
+		if (objectInRoom(kObjectCat, kRoomHutInterior) && randomly(128))
+			_console->writeWrappedText(_gameData->getString(kStringMeow));
+		return;
+	}
+
+	//
+	// The Goblin pulls a random prank if he is in the room
+	//
+	if (getObject(kObjectGoblin)->room == _currentRoom) {
+		stringIndex = _rnd->getRandomNumberRng(kStringGoblinMessageBase, kStringGoblinMessageEnd);
+		_console->writeWrappedText(_gameData->getString(stringIndex));
+		return;
+	}
+
+	//
+	// In the castle there is a ~20% chance for the vampire to appear
+	// if you are not holding the garlic.
+	//
+	if (curRoom->flags & kRoomFlagCastle) {
+		if (getObject(kObjectGarlic)->room != kRoomInventory && !_gameData->_flags[kFlagVampireDead] && randomly(200)) {
+			moveObject(kObjectVampire, _currentRoom);
+			_gameData->_variables[kVarTimeout] = _gameData->_variables[kVarTurnCounter] + 1;
+			return;
+		}
+	}
 
 	//
 	// In the forest there is a small chance to either get a random
 	// message or get picked up by the eagle and taken elsewhere in
 	// the forest.
 	//
-	if ((curRoom->flags & kRoomFlagForest) && _gameData->_variables[kVarTurnCounter] >= 4 && randomly(255 - 39)) {
+	if ((curRoom->flags & kRoomFlagForest) && turnCount >= 4 && randomly(255 - 39)) {
 		stringIndex = _rnd->getRandomNumberRng(kStringForestMessageBase,kStringEagle);
 		_console->writeWrappedText(_gameData->getString(stringIndex));
 		if (stringIndex == kStringEagle) {
@@ -123,9 +155,18 @@ void ComprehendEngineTransylvania::beforeTurn(void) {
 			if (roomIndex == _currentRoom)
 				roomIndex += 0xf;
 
-			// FIXME - zero the vampire/werewolf
 			moveToRoom(roomIndex);
+			return;
 		}
+	}
+
+	//
+	// After turn 10 the werewolf has ~33% to appear in the forest
+	//
+	if ((curRoom->flags & kRoomFlagForest) && !_gameData->_flags[kFlagWerewolfDead] && turnCount >= 10 && randomly(172)) {
+		moveObject(kObjectWerewolf, _currentRoom);
+		_gameData->_variables[kVarTimeout] = _gameData->_variables[kVarTurnCounter] + 1;
+		return;
 	}
 }
 
