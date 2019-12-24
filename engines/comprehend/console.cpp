@@ -409,7 +409,10 @@ char *Console::getLine(void) {
 			default:
 				break;
 			}
+
+			g_system->delayMillis(1);
 		}
+		g_system->delayMillis(1);
 	}
 
 	scrollUp(false);

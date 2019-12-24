@@ -19,7 +19,8 @@ struct ComprehendGameDescription;
 
 enum GameType {
 	kGameTypeNone	= 0,
-	kGameTypeTr
+	kGameTypeTr,
+	kGameTypeOo
 };
 
 // Debug channels
@@ -49,7 +50,8 @@ struct sentence {
 
 struct StringFile {
 	const char	*name;
-	off_t		offset;
+	off_t		base_offset;
+	off_t		end_offset;
 };
 
 class ComprehendEngine : public Engine {
@@ -123,22 +125,6 @@ protected:
 	// Game state
 	unsigned	_updateFlags;
 	uint8		_currentRoom;
-};
-
-// FIXME - move to own file
-class ComprehendEngineTransylvania : public ComprehendEngine {
-public:
-	ComprehendEngineTransylvania(OSystem *syst, const ComprehendGameDescription *gd) : ComprehendEngine(syst, gd) { }
-
-	const char *getMainDataFile() const;
-	Common::Array<struct StringFile> getStringFiles() const;
-
-	Common::Array<const char *> getRoomImageFiles() const;
-	Common::Array<const char *> getObjectImageFiles() const;
-
-	int roomType(unsigned roomIndex);
-	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
-	void beforeTurn(void);
 };
 
 } // End of namespace Comprehend

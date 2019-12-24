@@ -8,6 +8,8 @@
 #include "graphics/surface.h"
 
 #include "comprehend/comprehend.h"
+#include "comprehend/game_tr.h"
+#include "comprehend/game_oo.h"
 
 namespace Comprehend {
 
@@ -18,6 +20,7 @@ struct ComprehendGameDescription {
 
 static const PlainGameDescriptor comprehendGames[] = {
 	{"tr", "Transylvania"},
+	{"oo", "OO-Topos"},
 	{0, 0},
 };
 
@@ -25,14 +28,28 @@ static const ComprehendGameDescription gameDescriptions[] = {
 	{
 		// Transylvania
 		{
-			"tr", 0,
+			"tr",
+			"DOS",
 			AD_ENTRY1("TR.GDA", "22e08633eea02ceee49b909dfd982d22"),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
 			GUIO0()
 		},
-		kGameTypeTr,
+		kGameTypeTr
+	},
+	{
+		// OO-Topos
+		{
+			"oo",
+			"DOS",
+			AD_ENTRY1("G0", "56460c1ee669c253607534155d7e9db4"),
+			Common::EN_ANY,
+			Common::kPlatformDOS,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		kGameTypeOo
 	},
 
 	{AD_TABLE_END_MARKER, kGameTypeNone}
@@ -40,7 +57,7 @@ static const ComprehendGameDescription gameDescriptions[] = {
 
 class ComprehendMetaEngine : public AdvancedMetaEngine {
 public:
-	ComprehendMetaEngine() : AdvancedMetaEngine(gameDescriptions, sizeof(gameDescriptions), comprehendGames) {
+	ComprehendMetaEngine() : AdvancedMetaEngine(gameDescriptions, sizeof(ComprehendGameDescription), comprehendGames) {
 	}
 
 	const char *getName() const {
@@ -50,10 +67,10 @@ public:
 	const char *getOriginalCopyright() const {
 		return "Comprehend Engine (C) 1985 Polarware";
 	}
-		
+
 	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const;
 	bool hasFeature(MetaEngineFeature f) const;
-	
+
 	int getMaximumSaveSlot() const;
 	SaveStateList listSaves(const char *target) const;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const;
@@ -68,6 +85,10 @@ bool ComprehendMetaEngine::createInstance(OSystem *syst, Engine **engine, const 
 		switch (cgd->gameType) {
 		case kGameTypeTr:
 			*engine = new ComprehendEngineTransylvania(syst, cgd);
+			break;
+
+		case kGameTypeOo:
+			*engine = new ComprehendEngineOOTopos(syst, cgd);
 			break;
 
 		default:
@@ -101,7 +122,7 @@ SaveStateDescriptor ComprehendMetaEngine::querySaveMetaInfos(const char *target,
 }
 
 void ComprehendMetaEngine::removeSaveState(const char *target, int slot) const {
-	
+
 }
 
 void ComprehendEngine::initGame(const ComprehendGameDescription *gd) {

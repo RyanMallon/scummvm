@@ -157,6 +157,8 @@ public:
 	Common::Array<char *> _strings;
 	Common::Array<struct function> _functions;
 
+	unsigned int _comprehendVersion;
+	off_t _headerOffset;
 	uint8 _startRoom;
 
 	bool _flags[64];

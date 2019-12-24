@@ -4,6 +4,7 @@ MODULE_OBJS :=				\
 	detection.o			\
 	comprehend.o			\
 	comprehend_transylvania.o	\
+	game_oo.o			\
 	game_data.o			\
 	image_manager.o			\
 	image_file.o			\

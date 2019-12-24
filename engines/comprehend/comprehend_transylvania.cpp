@@ -2,6 +2,7 @@
 #include "common/debug.h"
 
 #include "comprehend/comprehend.h"
+#include "comprehend/game_tr.h"
 
 namespace Comprehend {
 
@@ -36,11 +37,11 @@ static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
 static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
 
 static const struct StringFile stringFiles[] = {
-	{"MA.MS1", 0x88},
-	{"MB.MS1", 0x88},
-	{"MC.MS1", 0x88},
-	{"MD.MS1", 0x88},
-	{"ME.MS1", 0x88},
+	{"MA.MS1", 0x88, 0x0},
+	{"MB.MS1", 0x88, 0x0},
+	{"MC.MS1", 0x88, 0x0},
+	{"MD.MS1", 0x88, 0x0},
+	{"ME.MS1", 0x88, 0x0},
 };
 
 const char *ComprehendEngineTransylvania::getMainDataFile() const {

@@ -631,7 +631,7 @@ void Renderer::drawImage(Common::File *file, off_t offset) {
 			break;
 
 		doImageOpcode(file, opcode);
-		g_system->delayMillis(1);
+		//g_system->delayMillis(1);
 	}
 
 	updateScreen();

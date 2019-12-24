@@ -31,7 +31,7 @@ GameData::~GameData() {
 }
 
 void GameData::readHeaderAddress(uint16 *addr) {
-	*addr = _mainFile.readUint16LE() - 0x5a00 + 4;
+	*addr = _mainFile.readUint16LE() - 0x5a00 + _headerOffset;
 }
 
 bool GameData::readActionTableHeader(uint8 *word, uint8 *count) {
@@ -47,6 +47,8 @@ void GameData::loadActionTable(ActionType type, size_t numWords, WordType word1,
 	uint8 headerWord, count;
 	size_t i, j;
 
+	debug("Read action table type %d from %x", type, _header.actions[type]);
+	_mainFile.seek(_header.actions[type], SEEK_SET);
 	while (1) {
 		if (!readActionTableHeader(&headerWord, &count))
 			break;
@@ -79,6 +81,7 @@ void GameData::loadActionTableV(void) {
 	uint16 func;
 	size_t i;
 
+	_mainFile.seek(_header.actions[kActionV], SEEK_SET);
 	while (1) {
 		verb = _mainFile.readByte();
 		if (verb == 0)
@@ -103,52 +106,28 @@ void GameData::loadActionTableV(void) {
 }
 
 void GameData::loadActions(void) {
-	ActionType type;
-	size_t i;
+	switch (_comprehendVersion) {
+	case 1:
+		loadActionTable(kActionVVNN, 4, kWordVerb, kWordVerb, kWordNoun, kWordNoun, 0);
+		loadActionTable(kActionVDN, 3, kWordVerb, kWordVerb, kWordNoun, kWordNone, 0);
+		break;
 
-	for (i = kActionVVNN; i < kNumActionTypes; i++) {
-		type = static_cast<ActionType>(i);
-
-		_mainFile.seek(_header.actions[type], SEEK_SET);
-		switch (type) {
-		case kActionVVNN:
-			loadActionTable(type, 4, kWordVerb, kWordVerb, kWordNoun, kWordNoun, 0);
-			break;
-
-		case kActionVNJN:
-			loadActionTable(type, 4, kWordVerb, kWordNoun, kWordJoin, kWordNoun, 2);
-			break;
-
-		case kActionVJN:
-			loadActionTable(type, 3, kWordVerb, kWordJoin, kWordNoun, kWordNone, 1);
-			break;
-
-		case kActionVDN:
-			loadActionTable(type, 3, kWordVerb, kWordVerb, kWordNoun, kWordNone, 0);
-			break;
-
-		case kActionVNN:
-			loadActionTable(type, 3, kWordVerb, kWordNoun, kWordNoun, kWordNone, 0);
-			break;
-
-		case kActionVN:
-			loadActionTable(type, 2, kWordVerb, kWordNoun, kWordNone, kWordNone, 0);
-			break;
-
-		case kActionV:
-			loadActionTableV();
-			break;
-
-		default:
-			break;
-		}
+	case 2:
+	default:
+		loadActionTable(kActionVNN, 3, kWordVerb, kWordNoun, kWordNoun, kWordNone, 0);
+		break;
 	}
 
-#if 0
+	loadActionTable(kActionVNJN, 4, kWordVerb, kWordNoun, kWordJoin, kWordNoun, 2);
+	loadActionTable(kActionVJN, 3, kWordVerb, kWordJoin, kWordNoun, kWordNone, 1);
+	loadActionTable(kActionVN, 2, kWordVerb, kWordNoun, kWordNone, kWordNone, 0);
+	loadActionTableV();
+
+#if 1
 	debug("%u actions", (unsigned)_actions.size());
-	for (i = 0; i < _actions.size(); i++) {
+	for (size_t i = 0; i < _actions.size(); i++) {
 		debugN("[%.4x] (", (unsigned)i);
-		for (j = 0; j < 4; j++) {
+		for (size_t j = 0; j < 4; j++) {
 			if (j < _actions[i].numWords) {
 				switch (_actions[i].word[j].type) {
 				case kWordVerb: debugN("V"); break;
@@ -162,7 +141,7 @@ void GameData::loadActions(void) {
 		}
 		debugN(") ");
 
-		for (j = 0; j < _actions[i].numWords; j++)
+		for (size_t j = 0; j < _actions[i].numWords; j++)
 			debugN("%.2x:%.2x ",
 			       _actions[i].word[j].index,
 			       _actions[i].word[j].type);
@@ -281,6 +260,7 @@ unsigned GameData::loadStrings(Common::File &file, unsigned index, int32 startOf
 void GameData::loadExtraStrings(Common::Array<struct StringFile> stringFiles) {
 	Common::File file;
 	unsigned i, index;
+	int32 endOffset;
 
 	for (i = 0; i < stringFiles.size(); i++) {
 		if (!file.open(stringFiles[i].name))
@@ -288,7 +268,11 @@ void GameData::loadExtraStrings(Common::Array<struct StringFile> stringFiles) {
 
 		index = 0x200 + (i * 0x40) + (i == 0 ? 1 : 0);
 		_strings.resize(index);
-		loadStrings(file, index, stringFiles[i].offset, file.size());
+		if (stringFiles[i].end_offset != 0)
+		    endOffset = stringFiles[i].end_offset;
+		else
+		    endOffset = file.size();
+		loadStrings(file, index, stringFiles[i].base_offset, endOffset);
 		file.close();
 	}
 }
@@ -390,7 +374,6 @@ void GameData::loadRooms(void) {
 
 void GameData::loadObjects(void) {
 	// FIXME - use vectors?
-	_numObjects = _header.objectWords - _header.objectFlags;
 	_objects = new struct object[_numObjects];
 
 	readArray16(_header.objectDescriptions, _objects, description, 0, _numObjects);
@@ -399,7 +382,7 @@ void GameData::loadObjects(void) {
 	readArray8(_header.objectRooms, _objects, room, 0, _numObjects);
 	readArray8(_header.objectGraphics, _objects, graphic, 0, _numObjects);
 
-#if 0
+#if 1
 	debug("%u objects", (unsigned)_numObjects);
 	for (size_t i = 0; i < _numObjects; i++)
 		debug("[%.2x] desc=%.4x flags=%.2x word=%.2x room=%.2x gfx=%.2x",
@@ -432,7 +415,7 @@ void GameData::loadDictionaryWords(void) {
 		_words[i].index.type = _mainFile.readByte();
 	}
 
-#if 0
+#if 1
 	debug("%u words", (unsigned)_numWords);
 	for (i = 0; i < _numWords; i++)
 		debug("[%.4x] %.2x:%.2x word=%s",
@@ -471,17 +454,47 @@ void GameData::loadGameData(const char *mainDataFile, Common::Array<struct Strin
 
 	// Read header
 	_header.magic = _mainFile.readUint16LE();
+	switch (_header.magic) {
+	case 0x2000: // Transylvania, Crimson Crown Disk 1
+	case 0x4000: // Crimson Crown Disk 2
+		_comprehendVersion = 1;
+		_headerOffset = 0x4;
+		break;
+
+	case 0x93f0: // OO-Topos
+		_comprehendVersion = 2;
+		_headerOffset = 0x0;
+		break;
+
+	case 0xa429: // Talisman
+		_comprehendVersion = 2;
+		_headerOffset = 0x0;
+		break;
+
+	default:
+		error("Unknown Comprehend magic %04x", _header.magic);
+		break;
+	}
 
 	// Second word is unknown
 	_mainFile.readUint16LE();
 
 	// Action tables
-	readHeaderAddress(&_header.actions[kActionVVNN]);
-	readHeaderAddress(&_header.actions[kActionVVN]);
-	readHeaderAddress(&_header.actions[kActionVNJN]);
-	readHeaderAddress(&_header.actions[kActionVJN]);
-	readHeaderAddress(&_header.actions[kActionVDN]);
-	//readHeaderAddress(&_header.actionsVNN);
+	switch (_comprehendVersion) {
+	case 1:
+		readHeaderAddress(&_header.actions[kActionVVNN]);
+		readHeaderAddress(&_header.actions[kActionVVN]);
+		readHeaderAddress(&_header.actions[kActionVNJN]);
+		readHeaderAddress(&_header.actions[kActionVJN]);
+		readHeaderAddress(&_header.actions[kActionVDN]);
+		break;
+
+	case 2:
+		readHeaderAddress(&_header.actions[kActionVNJN]);
+		readHeaderAddress(&_header.actions[kActionVJN]);
+		readHeaderAddress(&_header.actions[kActionVNN]);
+		break;
+	}
 	readHeaderAddress(&_header.actions[kActionVN]);
 	readHeaderAddress(&_header.actions[kActionV]);
 
@@ -506,11 +519,28 @@ void GameData::loadGameData(const char *mainDataFile, Common::Array<struct Strin
 	readHeaderAddress(&_header.roomGraphics);
 
 	// Objects
-	readHeaderAddress(&_header.objectRooms);
-	readHeaderAddress(&_header.objectFlags);
-	readHeaderAddress(&_header.objectWords);
-	readHeaderAddress(&_header.objectDescriptions);
-	readHeaderAddress(&_header.objectGraphics);
+	switch (_comprehendVersion) {
+	case 1:
+		readHeaderAddress(&_header.objectRooms);
+		readHeaderAddress(&_header.objectFlags);
+		readHeaderAddress(&_header.objectWords);
+		readHeaderAddress(&_header.objectDescriptions);
+		readHeaderAddress(&_header.objectGraphics);
+
+		_numObjects = _header.objectWords - _header.objectFlags;
+		break;
+
+	case 2:
+	default:
+		readHeaderAddress(&_header.objectDescriptions);
+		readHeaderAddress(&_header.objectWords);
+		readHeaderAddress(&_header.objectRooms);
+		readHeaderAddress(&_header.objectFlags);
+		readHeaderAddress(&_header.objectGraphics);
+
+		_numObjects = _header.objectFlags - _header.objectRooms;
+		break;
+	}
 
 	readHeaderAddress(&_header.strings);
 
