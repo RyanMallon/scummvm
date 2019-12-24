@@ -409,9 +409,8 @@ char *Console::getLine(void) {
 			default:
 				break;
 			}
-
-			g_system->delayMillis(1);
 		}
+
 		g_system->delayMillis(1);
 	}
 
@@ -424,9 +423,12 @@ void Console::waitKey() {
 	Common::Event event;
 
 	while (1) {
-		while (g_system->getEventManager()->pollEvent(event))
+		while (g_system->getEventManager()->pollEvent(event)) {
 			if (event.type == Common::EVENT_KEYDOWN)
 				return;
+		}
+
+		g_system->delayMillis(1);
 	}
 }
 

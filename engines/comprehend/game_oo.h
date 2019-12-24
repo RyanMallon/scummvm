@@ -15,9 +15,13 @@ public:
 	Common::Array<const char *> getRoomImageFiles() const;
 	Common::Array<const char *> getObjectImageFiles() const;
 
-	//int roomType(unsigned roomIndex);
-	//void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
-	//void beforeTurn(void);
+	int roomType(unsigned roomIndex);
+	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
+	void beforeTurn(void);
+
+ private:
+	bool _flashlightOn;
+	bool _wearingGoggles;
 };
 
 } // End of namespace Comprehend

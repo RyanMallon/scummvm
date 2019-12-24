@@ -9,6 +9,7 @@
 
 #include "comprehend/comprehend.h"
 #include "comprehend/game_tr.h"
+#include "comprehend/game_cc.h"
 #include "comprehend/game_oo.h"
 
 namespace Comprehend {
@@ -37,6 +38,32 @@ static const ComprehendGameDescription gameDescriptions[] = {
 			GUIO0()
 		},
 		kGameTypeTr
+	},
+	{
+		// Crimson Crown (disk one)
+		{
+			"cc1",
+			"DOS",
+			AD_ENTRY1("CC1.GDA", "f2abf019675ac5c9bcfd81032bc7787b"),
+			Common::EN_ANY,
+			Common::kPlatformDOS,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		kGameTypeCc
+	},
+	{
+		// Crimson Crown (disk two)
+		{
+			"cc2",
+			"DOS",
+			AD_ENTRY1("CC2.GDA", "871eba601fc4204c815224169121046d"),
+			Common::EN_ANY,
+			Common::kPlatformDOS,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		kGameTypeCc
 	},
 	{
 		// OO-Topos
@@ -81,10 +108,13 @@ bool ComprehendMetaEngine::createInstance(OSystem *syst, Engine **engine, const 
 	const ComprehendGameDescription *cgd = (const ComprehendGameDescription *)gd;
 
 	if (cgd) {
-		// FIXME
 		switch (cgd->gameType) {
 		case kGameTypeTr:
 			*engine = new ComprehendEngineTransylvania(syst, cgd);
+			break;
+
+		case kGameTypeCc:
+			//*engine = new ComprehendEngineCrimsonCrown(syst, cgd);
 			break;
 
 		case kGameTypeOo:

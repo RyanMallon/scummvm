@@ -680,6 +680,12 @@ void Renderer::drawDarkRoom() {
 	updateScreen();
 }
 
+void Renderer::drawBrightRoom() {
+	// Clear to white
+	_surf.fillRect(Common::Rect(0, 0, kGraphicsWidth, kGraphicsHeight), kColorWhite);
+	updateScreen();
+}
+
 void Renderer::drawChar(uint8 c, int x, int y, int color) {
 	const uint8 *charData;
 	int i, j;

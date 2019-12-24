@@ -3,7 +3,8 @@ MODULE := engines/comprehend
 MODULE_OBJS :=				\
 	detection.o			\
 	comprehend.o			\
-	comprehend_transylvania.o	\
+	game_tr.o			\
+	game_cc.o			\
 	game_oo.o			\
 	game_data.o			\
 	image_manager.o			\

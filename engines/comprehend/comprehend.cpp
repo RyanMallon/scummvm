@@ -589,6 +589,12 @@ void ComprehendEngine::update(void) {
 		drawObjects = false;
 		break;
 
+	case kRoomBright:
+		if (_updateFlags & kUpdateGraphics)
+			_renderer->drawBrightRoom();
+		drawObjects = false;
+		break;
+
 	default:
 		if (_updateFlags & kUpdateGraphics)
 			_renderer->drawRoomImage(room->graphic - 1);
@@ -619,7 +625,17 @@ Common::Error ComprehendEngine::run() {
 
 	_gameData = new GameData();
 	_gameData->loadGameData(getMainDataFile(), getStringFiles());
-	_opcodeMap = new OpcodeMapV1();
+
+	switch (_gameData->_comprehendVersion) {
+	case 1:
+	    _opcodeMap = new OpcodeMapV1();
+	    break;
+
+	case 2:
+	default:
+	    _opcodeMap = new OpcodeMapV2();
+	    break;
+	}
 
 	_imageManager.init(getRoomImageFiles(), getObjectImageFiles());
 

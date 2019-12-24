@@ -20,6 +20,7 @@ struct ComprehendGameDescription;
 enum GameType {
 	kGameTypeNone	= 0,
 	kGameTypeTr,
+	kGameTypeCc,
 	kGameTypeOo
 };
 
@@ -40,7 +41,8 @@ enum {
 // Room types
 enum {
 	kRoomNormal,
-	kRoomDark
+	kRoomDark,
+	kRoomBright
 };
 
 struct sentence {
