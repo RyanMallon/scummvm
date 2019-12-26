@@ -151,6 +151,7 @@ public:
 		uint16	objectGraphics;
 
 		uint16	strings;
+		uint16  stringsEnd;
 	} _header;
 
 	Common::Array<struct action> _actions;
@@ -163,6 +164,8 @@ public:
 
 	bool _flags[64];
 	uint16 _variables[128];
+	Common::Array<char *> _variableWords;
+	unsigned int _currentVariableWord;
 
 	size_t _numRooms;
 	struct room *_rooms;
@@ -191,11 +194,16 @@ public:
 	void loadExtraStrings(Common::Array<struct StringFile> stringFiles);
 
 	void loadVariables(void);
+	void loadVariableWords(void);
 	void loadFlags(void);
 	void loadRooms();
 	void loadObjects();
 	void loadDictionaryWords();
 	void loadFunctions();
+
+	void setVariableWord(unsigned int index, const char *string);
+	const char *getVariableWord(unsigned int index);
+	const char *getCurrentVariableWord(void);
 
 	bool dictionaryWordMatch(struct word *word, const char *string);
 	struct wordIndex *lookupDictionaryWord(const char *string);

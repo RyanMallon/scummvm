@@ -433,6 +433,49 @@ void GameData::loadVariables(void) {
 		_variables[i] = _mainFile.readUint16LE();
 }
 
+void GameData::loadVariableWords(void) {
+	char word[256];
+	size_t i;
+
+	// Variable words start after the string data. The first u16 value is unknown - skip over it
+	_mainFile.seek(_header.stringsEnd + sizeof(uint16), SEEK_SET);
+	while (1) {
+		memset(word, 0, sizeof(word));
+		for (i = 0; i < sizeof(word) - 1 && !_mainFile.eos(); i++) {
+			word[i] = _mainFile.readByte();
+			if (word[i] == '\0')
+				break;
+		}
+		if (i == 0)
+			break;
+
+		_variableWords.push_back(strdup(word));
+	}
+}
+
+void GameData::setVariableWord(unsigned int index, const char *string) {
+	char *stringCopy = strdup(string);
+
+	if (index >= _variableWords.size()) {
+		error("Bad variable word index %d", index);
+	} else {
+		free(_variableWords[index]);
+		_variableWords[index] = stringCopy;
+		debug("Set var word[%d] to %s", index, stringCopy);
+	}
+}
+
+const char *GameData::getVariableWord(unsigned int index) {
+	if (index >= _variableWords.size())
+		return "[BAD_VAR_WORD]";
+
+	return _variableWords[index];
+}
+
+const char *GameData::getCurrentVariableWord(void) {
+	return getVariableWord(_currentVariableWord);
+}
+
 void GameData::loadFlags(void) {
 	int i, bit, index = 0;
 	uint8 bitmask;
@@ -447,7 +490,9 @@ void GameData::loadFlags(void) {
 }
 
 void GameData::loadGameData(const char *mainDataFile, Common::Array<struct StringFile> stringFiles) {
-	uint16 dummy, stringsEnd;
+	uint16 dummy;
+
+	_currentVariableWord = 0;
 
 	if (!_mainFile.open(mainDataFile))
 		error("Main data file %s not found", mainDataFile);
@@ -546,13 +591,14 @@ void GameData::loadGameData(const char *mainDataFile, Common::Array<struct Strin
 
 	// FIXME
 	readHeaderAddress(&dummy);
-	readHeaderAddress(&stringsEnd);
+	readHeaderAddress(&_header.stringsEnd);
 
 	_mainFile.readByte(); // Unknown
 	_startRoom = _mainFile.readByte();
 	_mainFile.readByte(); // Unknown
 
         loadVariables();
+	loadVariableWords();
         loadFlags();
 
 	loadActions();
@@ -560,7 +606,7 @@ void GameData::loadGameData(const char *mainDataFile, Common::Array<struct Strin
 	loadObjects();
 	loadDictionaryWords();
 
-	loadStrings(_mainFile, 0, _header.strings, stringsEnd);
+	loadStrings(_mainFile, 0, _header.strings, _header.stringsEnd);
 	loadExtraStrings(stringFiles);
 
 #if 0

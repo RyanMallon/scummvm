@@ -6,6 +6,7 @@
 
 #include "comprehend/comprehend.h"
 #include "comprehend/renderer.h"
+#include "comprehend/game_data.h"
 #include "comprehend/console.h"
 
 namespace Comprehend {
@@ -153,7 +154,7 @@ static const uint8 dosFont[128 * 8] = {
 	0x00, 0x10, 0x38, 0x6c, 0xc6, 0xc6, 0xfe, 0x00,
 };
 
-Console::Console(Renderer *renderer) : _renderer(renderer) {
+Console::Console(Renderer *renderer, GameData *gameData) : _renderer(renderer), _gameData(gameData) {
 	int i;
 
 	_promptBlinkState = 0;
@@ -288,8 +289,7 @@ void Console::writeWrappedText(const char *text) {
 			break;
 
 		case kReplaceChar:
-			// FIXME
-			word = "[FIXME]";
+			word = _gameData->getCurrentVariableWord();
 			wordLen = strlen(word);
 			p++;
 			break;

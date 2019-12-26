@@ -487,7 +487,27 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		break;
 
 	case OPCODE_SET_STRING_REPLACEMENT:
-		// FIXME
+		_gameData->_currentVariableWord = instr->operand[0] - 1;
+		break;
+
+	case OPCODE_SET_CURRENT_NOUN_STRING_REPLACEMENT:
+		// TODO - Not sure what the operand is for. Possibly capitalisation?
+		if (noun) {
+			switch (noun->type) {
+			case kWordNounPlural:
+				_gameData->_currentVariableWord = 3;
+				break;
+			case kWordNounFemale:
+				_gameData->_currentVariableWord = 0;
+				break;
+			case kWordNounMale:
+				_gameData->_currentVariableWord = 1;
+				break;
+			default:
+				_gameData->_currentVariableWord = 2;
+				break;
+			}
+		}
 		break;
 
 	default:
@@ -640,11 +660,13 @@ Common::Error ComprehendEngine::run() {
 	_imageManager.init(getRoomImageFiles(), getObjectImageFiles());
 
 	_renderer = new Renderer(&_imageManager);
-	_console = new Console(_renderer);
+	_console = new Console(_renderer, _gameData);
 	_parser = new Parser(_gameData);
 
 	// FIXME - read from data file
 	_currentRoom = _gameData->_startRoom;
+
+	titleSequence();
 
 	_updateFlags = kUpdateAll;
 	while (1) {

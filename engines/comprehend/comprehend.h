@@ -92,8 +92,11 @@ public:
 
 	const ComprehendGameDescription *_gameDescription;
 	Common::RandomSource *_rnd;
+	GameData *_gameData;
 
 	// Methods provided by game specific engines
+	virtual void titleSequence(void) { }
+
 	virtual void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun) { }
 
 	virtual const char *getMainDataFile() const {
@@ -117,7 +120,6 @@ public:
 	}
 
 protected:
-	GameData *_gameData;
 	OpcodeMap *_opcodeMap;
 	ImageManager _imageManager;
 	Renderer *_renderer;

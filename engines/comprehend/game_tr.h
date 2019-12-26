@@ -15,6 +15,7 @@ public:
 	Common::Array<const char *> getRoomImageFiles() const;
 	Common::Array<const char *> getObjectImageFiles() const;
 
+	void titleSequence(void);
 	int roomType(unsigned roomIndex);
 	void handleSpecialOpcode(struct functionState *state, struct instruction *instr, struct wordIndex *verb, struct wordIndex *noun);
 	void beforeTurn(void);

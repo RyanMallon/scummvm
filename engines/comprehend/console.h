@@ -2,6 +2,7 @@
 #define COMPREHEND_CONSOLE_H
 
 #include "renderer.h"
+#include "game_data.h"
 
 namespace Comprehend {
 
@@ -9,7 +10,7 @@ class ComprehendEngine;
 
 class Console {
 public:
-	Console(Renderer *renderer);
+	Console(Renderer *renderer, GameData *gameData);
 	~Console();
 
 	void scrollUp(bool pause);
@@ -28,8 +29,8 @@ public:
 
 	void updateRect(Common::Rect rect);
 
-	ComprehendEngine *_engine;
 	Renderer *_renderer;
+	GameData *_gameData;
 	Graphics::Surface _surfs[2];
 	int _currentSurf;
 

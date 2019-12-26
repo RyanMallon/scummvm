@@ -24,6 +24,8 @@ static const int kObjectWerewolf = 0x22;
 static const int kObjectVampire = 0x27;
 
 // Strings
+static const int kStringWelcome = 0x20;
+static const int kStringNextOfKin = 0x21;
 static const int kStringMeow = 0x6d;
 static const int kStringForestMessageBase = 0x62;
 static const int kStringEagle = 0x6b;
@@ -32,6 +34,7 @@ static const int kStringGoblinMessageEnd = 0x61;
 
 // Variables
 static const int kVarTimeout = 0x0f;
+static const int kVarWordName = 0;
 
 static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
 static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
@@ -169,6 +172,18 @@ void ComprehendEngineTransylvania::beforeTurn(void) {
 		_gameData->_variables[kVarTimeout] = _gameData->_variables[kVarTurnCounter] + 1;
 		return;
 	}
+}
+
+void ComprehendEngineTransylvania::titleSequence(void) {
+	char *name;
+
+	// Your name?
+	_console->writeWrappedText(_gameData->getString(kStringWelcome));
+	_gameData->setVariableWord(kVarWordName, _console->getLine());
+
+	// Next of kin? The game doesn't store this
+	_console->writeWrappedText(_gameData->getString(kStringNextOfKin));
+	_console->getLine();
 }
 
 } // End of namespace Comprehend
