@@ -315,6 +315,14 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 			state->setTestResult(obj->room == kRoomNowhere);
 		break;
 
+	case OPCODE_CURRENT_OBJECT_IS_NOT_NOWHERE:
+		obj = nounToObject(noun);
+		if (!obj)
+			state->setTestResult(false);
+		else
+			state->setTestResult(obj->room != kRoomNowhere);
+		break;
+
 	case OPCODE_OBJECT_IS_NOWHERE:
 		obj = &_gameData->_objects[instr->operand[0] - 1];
 		state->setTestResult(obj->room == kRoomNowhere);
@@ -467,10 +475,6 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 
 	case OPCODE_TEST_NOT_FLAG:
 		state->setTestResult(!_gameData->_flags[instr->operand[0]]);
-		break;
-
-	case OPCODE_TEST_FALSE:
-		state->setTestResult(false);
 		break;
 
 	case OPCODE_OR:
