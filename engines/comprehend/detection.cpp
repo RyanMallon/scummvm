@@ -21,6 +21,7 @@ struct ComprehendGameDescription {
 
 static const PlainGameDescriptor comprehendGames[] = {
 	{"tr", "Transylvania"},
+	{"cc", "Crimson Crown"},
 	{"oo", "OO-Topos"},
 	{0, 0},
 };
@@ -42,7 +43,7 @@ static const ComprehendGameDescription gameDescriptions[] = {
 	{
 		// Crimson Crown (disk one)
 		{
-			"cc1",
+			"cc",
 			"DOS",
 			AD_ENTRY1("CC1.GDA", "f2abf019675ac5c9bcfd81032bc7787b"),
 			Common::EN_ANY,
@@ -52,6 +53,7 @@ static const ComprehendGameDescription gameDescriptions[] = {
 		},
 		kGameTypeCc
 	},
+#if 0
 	{
 		// Crimson Crown (disk two)
 		{
@@ -65,6 +67,7 @@ static const ComprehendGameDescription gameDescriptions[] = {
 		},
 		kGameTypeCc
 	},
+#endif
 	{
 		// OO-Topos
 		{
@@ -114,7 +117,7 @@ bool ComprehendMetaEngine::createInstance(OSystem *syst, Engine **engine, const 
 			break;
 
 		case kGameTypeCc:
-			//*engine = new ComprehendEngineCrimsonCrown(syst, cgd);
+			*engine = new ComprehendEngineCrimsonCrown(syst, cgd);
 			break;
 
 		case kGameTypeOo:
