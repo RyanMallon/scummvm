@@ -449,7 +449,7 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		break;
 
 	case OPCODE_SPECIAL:
-		/* Game specific */
+		// Game specific
 		handleSpecialOpcode(state, instr, verb, noun);
 		break;
 
@@ -688,15 +688,15 @@ Common::Error ComprehendEngine::run() {
 		if (shouldQuit())
 			break;
 
-		/* Run the each turn functions */
+		// Run the each turn functions
 		beforeTurn();
 		evalFunction(&_gameData->_functions[0], NULL, NULL);
 
-		/* Update graphics */
+		// Update graphics/text
 		update();
 
+		// Parse and handle user input
 		line = _console->getLine();
-
 		_parser->readString(sentences, line);
 		for (i = 0; i < sentences.size(); i++)
 			handleSentence(sentences[i]);
