@@ -36,6 +36,10 @@ static const int kStringGoblinMessageEnd = 0x61;
 static const int kVarTimeout = 0x0f;
 static const int kVarWordName = 0;
 
+// Images
+static const int kImageZin = 41;
+static const int kImageTitle = 43;
+
 static const char *roomImageFiles[]	= {"RA.MS1", "RB.MS1", "RC.MS1"};
 static const char *objectImageFiles[]	= {"OA.MS1", "OB.MS1", "OC.MS1"};
 
@@ -97,7 +101,7 @@ void ComprehendEngineTransylvania::handleSpecialOpcode(struct functionState *sta
 
 	case 0x09:
 		// Zin splash screen
-		_renderer->drawRoomImage(41);
+		_renderer->drawRoomImage(kImageZin);
 		_console->waitKey();
 		_updateFlags = kUpdateGraphics;
 		break;
@@ -176,6 +180,8 @@ void ComprehendEngineTransylvania::beforeTurn(void) {
 
 void ComprehendEngineTransylvania::titleSequence(void) {
 	char *name;
+
+	// TODO - title image
 
 	// Your name?
 	_console->writeWrappedText(_gameData->getString(kStringWelcome));
