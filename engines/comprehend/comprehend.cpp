@@ -441,6 +441,13 @@ void ComprehendEngine::evalInstruction(struct functionState *state, struct instr
 		}
 		break;
 
+	case OPCODE_SET_ROOM_GRAPHIC:
+		room = &_gameData->_rooms[instr->operand[0]];
+		room->graphic = instr->operand[1];
+		if (instr->operand[0] == _currentRoom)
+			_updateFlags |= kUpdateGraphics;
+		break;
+
 	case OPCODE_SPECIAL:
 		/* Game specific */
 		handleSpecialOpcode(state, instr, verb, noun);
